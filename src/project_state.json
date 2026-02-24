@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Dabbawala delivery app - food delivery system connecting customers, restaurants, delivery partners, and admins",
+  "architectural_notes": [
+    "Multi-role app with customer, restaurant, delivery partner, and admin interfaces",
+    "Backend integration for order syncing across all user roles",
+    "Real-time order status updates across all dashboards"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-rebuild-the-multi-tenant-pwa-architecture-with-four-standalone-apps-customer-delivery-restaurant-admin-that-can-be-detected-and-launched-based-on-url-parameters-subdomains-or-paths",
+      "title": "Rebuild the multi-tenant PWA architecture with four standalone apps (Customer, Delivery, Restaurant, Admin) that can be detected and launched based on URL parameters, subdomains, or paths",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-authentication-system-supporting-internet-identity-and-otp-login-email-and-phone-for-all-four-app-types-with-profile-setup-flows",
+      "title": "Rebuild authentication system supporting Internet Identity and OTP login (email and phone) for all four app types with profile setup flows",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-customer-app-features-including-meal-browsing-subscription-ordering-dabba-booking-flow-with-pickup-drop-addresses-and-time-slots-order-history-and-booking-management",
+      "title": "Rebuild customer app features including meal browsing, subscription ordering, dabba booking flow with pickup/drop addresses and time slots, order history, and booking management",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-restaurant-partner-app-with-meal-management-create-edit-image-upload-order-viewing-and-revenue-tracking-dashboard",
+      "title": "Rebuild restaurant partner app with meal management (create, edit, image upload), order viewing, and revenue tracking dashboard",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-delivery-partner-app-with-availability-toggle-assigned-orders-and-bookings-dashboard-status-update-controls-and-earnings-tracking",
+      "title": "Rebuild delivery partner app with availability toggle, assigned orders and bookings dashboard, status update controls, and earnings tracking",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-admin-app-with-statistics-dashboard-management-interfaces-for-customers-restaurants-delivery-partners-and-orders-with-csv-export-functionality-plus-twilio-configuration-panel",
+      "title": "Rebuild admin app with statistics dashboard, management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality, plus Twilio configuration panel",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-react-query-integration-with-hooks-for-all-backend-operations-including-user-profiles-meals-orders-reviews-bookings-subscriptions-delivery-partners-and-restaurant-profiles-with-localstorage-fallback",
+      "title": "Rebuild React Query integration with hooks for all backend operations including user profiles, meals, orders, reviews, bookings, subscriptions, delivery partners, and restaurant profiles with localStorage fallback",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Rebuild dabbawala app with all previous features",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Provide complete source code without hosting",
+      "reqIds": [
+        "AR-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Rebuild the complete backend with all data models including Meal, Order, RestaurantProfile, DeliveryPartner, CustomerProfile, and DabbaBooking with their respective status enums and OTP authentication system supporting both Twilio SMS and email verification",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Rebuild PWA functionality with app-specific manifests for each tenant, service worker with aggressive caching strategies, install prompts, and offline support",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Rebuild theming system with OKLCH color schemes for each app variant (customer green, delivery blue, restaurant orange, admin slate) with light/dark mode support using Tailwind CSS",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Dabbawala App",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.625rem;
+        --background: 0.99 0 0;
+        --foreground: 0.15 0 0;
+        --card: 1 0 0;
+        --card-foreground: 0.15 0 0;
+        --popover: 1 0 0;
+        --popover-foreground: 0.15 0 0;
+        --primary: 0.45 0.15 145;
+        --primary-foreground: 0.99 0 0;
+        --secondary: 0.96 0.02 145;
+        --secondary-foreground: 0.15 0 0;
+        --muted: 0.96 0 0;
+        --muted-foreground: 0.50 0 0;
+        --accent: 0.95 0.03 145;
+        --accent-foreground: 0.15 0 0;
+        --destructive: 0.55 0.22 25;
+        --destructive-foreground: 0.99 0 0;
+        --border: 0.92 0 0;
+        --input: 0.92 0 0;
+        --ring: 0.45 0.15 145;
+        --chart-1: 0.65 0.20 145;
+        --chart-2: 0.60 0.18 85;
+        --chart-3: 0.55 0.16 25;
+        --chart-4: 0.70 0.15 200;
+        --chart-5: 0.75 0.12 280;
+        --sidebar: 0.99 0 0;
+        --sidebar-foreground: 0.15 0 0;
+        --sidebar-primary: 0.45 0.15 145;
+        --sidebar-primary-foreground: 0.99 0 0;
+        --sidebar-accent: 0.96 0.02 145;
+        --sidebar-accent-foreground: 0.15 0 0;
+        --sidebar-border: 0.92 0 0;
+        --sidebar-ring: 0.45 0.15 145;
+        
+        /* Fresh Customer App - Green/Teal branding */
+        --fresh-50: 0.98 0.02 145;
+        --fresh-100: 0.95 0.04 145;
+        --fresh-200: 0.90 0.08 145;
+        --fresh-300: 0.80 0.12 145;
+        --fresh-400: 0.65 0.16 145;
+        --fresh-500: 0.50 0.18 145;
+        --fresh-600: 0.45 0.15 145;
+        --fresh-700: 0.38 0.12 145;
+        --fresh-800: 0.30 0.10 145;
+        --fresh-900: 0.22 0.08 145;
+        --fresh-950: 0.15 0.05 145;
+        
+        /* Delivery App - Blue branding */
+        --delivery-50: 0.98 0.02 240;
+        --delivery-100: 0.95 0.05 240;
+        --delivery-200: 0.90 0.10 240;
+        --delivery-300: 0.80 0.15 240;
+        --delivery-400: 0.65 0.18 240;
+        --delivery-500: 0.55 0.20 240;
+        --delivery-600: 0.48 0.18 240;
+        --delivery-700: 0.40 0.15 240;
+        --delivery-800: 0.32 0.12 240;
+        --delivery-900: 0.24 0.10 240;
+        --delivery-950: 0.16 0.08 240;
+        
+        /* Restaurant App - Orange branding */
+        --restaurant-50: 0.98 0.02 40;
+        --restaurant-100: 0.95 0.05 40;
+        --restaurant-200: 0.90 0.10 40;
+        --restaurant-300: 0.80 0.15 40;
+        --restaurant-400: 0.70 0.18 40;
+        --restaurant-500: 0.62 0.20 40;
+        --restaurant-600: 0.55 0.18 40;
+        --restaurant-700: 0.45 0.15 40;
+        --restaurant-800: 0.35 0.12 40;
+        --restaurant-900: 0.28 0.10 40;
+        --restaurant-950: 0.18 0.08 40;
+        
+        /* Admin App - Slate branding */
+        --admin-50: 0.98 0.01 240;
+        --admin-100: 0.95 0.02 240;
+        --admin-200: 0.88 0.03 240;
+        --admin-300: 0.78 0.04 240;
+        --admin-400: 0.62 0.05 240;
+        --admin-500: 0.50 0.06 240;
+        --admin-600: 0.42 0.05 240;
+        --admin-700: 0.35 0.04 240;
+        --admin-800: 0.28 0.03 240;
+        --admin-900: 0.22 0.02 240;
+        --admin-950: 0.14 0.01 240;
+    }
+
+    .dark {
+        --background: 0.12 0 0;
+        --foreground: 0.98 0 0;
+        --card: 0.15 0 0;
+        --card-foreground: 0.98 0 0;
+        --popover: 0.15 0 0;
+        --popover-foreground: 0.98 0 0;
+        --primary: 0.60 0.18 145;
+        --primary-foreground: 0.12 0 0;
+        --secondary: 0.22 0.05 145;
+        --secondary-foreground: 0.98 0 0;
+        --muted: 0.22 0 0;
+        --muted-foreground: 0.65 0 0;
+        --accent: 0.25 0.08 145;
+        --accent-foreground: 0.98 0 0;
+        --destructive: 0.60 0.20 25;
+        --destructive-foreground: 0.98 0 0;
+        --border: 0.25 0 0;
+        --input: 0.25 0 0;
+        --ring: 0.60 0.18 145;
+        --chart-1: 0.65 0.20 145;
+        --chart-2: 0.60 0.18 85;
+        --chart-3: 0.55 0.16 25;
+        --chart-4: 0.70 0.15 200;
+        --chart-5: 0.75 0.12 280;
+        --sidebar: 0.15 0 0;
+        --sidebar-foreground: 0.98 0 0;
+        --sidebar-primary: 0.60 0.18 145;
+        --sidebar-primary-foreground: 0.98 0 0;
+        --sidebar-accent: 0.22 0.05 145;
+        --sidebar-accent-foreground: 0.98 0 0;
+        --sidebar-border: 0.25 0 0;
+        --sidebar-ring: 0.60 0.18 145;
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    /* Fresh Customer App - Green utilities */
+    .text-fresh-50 { color: oklch(var(--fresh-50)); }
+    .text-fresh-100 { color: oklch(var(--fresh-100)); }
+    .text-fresh-200 { color: oklch(var(--fresh-200)); }
+    .text-fresh-300 { color: oklch(var(--fresh-300)); }
+    .text-fresh-400 { color: oklch(var(--fresh-400)); }
+    .text-fresh-500 { color: oklch(var(--fresh-500)); }
+    .text-fresh-600 { color: oklch(var(--fresh-600)); }
+    .text-fresh-700 { color: oklch(var(--fresh-700)); }
+    .text-fresh-800 { color: oklch(var(--fresh-800)); }
+    .text-fresh-900 { color: oklch(var(--fresh-900)); }
+    .text-fresh-950 { color: oklch(var(--fresh-950)); }
+    
+    .bg-fresh-50 { background-color: oklch(var(--fresh-50)); }
+    .bg-fresh-100 { background-color: oklch(var(--fresh-100)); }
+    .bg-fresh-200 { background-color: oklch(var(--fresh-200)); }
+    .bg-fresh-300 { background-color: oklch(var(--fresh-300)); }
+    .bg-fresh-400 { background-color: oklch(var(--fresh-400)); }
+    .bg-fresh-500 { background-color: oklch(var(--fresh-500)); }
+    .bg-fresh-600 { background-color: oklch(var(--fresh-600)); }
+    .bg-fresh-700 { background-color: oklch(var(--fresh-700)); }
+    .bg-fresh-800 { background-color: oklch(var(--fresh-800)); }
+    .bg-fresh-900 { background-color: oklch(var(--fresh-900)); }
+    .bg-fresh-950 { background-color: oklch(var(--fresh-950)); }
+    
+    .border-fresh-200 { border-color: oklch(var(--fresh-200)); }
+    .border-fresh-300 { border-color: oklch(var(--fresh-300)); }
+    .border-fresh-600 { border-color: oklch(var(--fresh-600)); }
+    .border-fresh-800 { border-color: oklch(var(--fresh-800)); }
+    
+    /* Delivery App - Blue utilities */
+    .text-delivery-50 { color: oklch(var(--delivery-50)); }
+    .text-delivery-100 { color: oklch(var(--delivery-100)); }
+    .text-delivery-200 { color: oklch(var(--delivery-200)); }
+    .text-delivery-300 { color: oklch(var(--delivery-300)); }
+    .text-delivery-400 { color: oklch(var(--delivery-400)); }
+    .text-delivery-500 { color: oklch(var(--delivery-500)); }
+    .text-delivery-600 { color: oklch(var(--delivery-600)); }
+    .text-delivery-700 { color: oklch(var(--delivery-700)); }
+    .text-delivery-800 { color: oklch(var(--delivery-800)); }
+    .text-delivery-900 { color: oklch(var(--delivery-900)); }
+    .text-delivery-950 { color: oklch(var(--delivery-950)); }
+    
+    .bg-delivery-50 { background-color: oklch(var(--delivery-50)); }
+    .bg-delivery-100 { background-color: oklch(var(--delivery-100)); }
+    .bg-delivery-200 { background-color: oklch(var(--delivery-200)); }
+    .bg-delivery-300 { background-color: oklch(var(--delivery-300)); }
+    .bg-delivery-400 { background-color: oklch(var(--delivery-400)); }
+    .bg-delivery-500 { background-color: oklch(var(--delivery-500)); }
+    .bg-delivery-600 { background-color: oklch(var(--delivery-600)); }
+    .bg-delivery-700 { background-color: oklch(var(--delivery-700)); }
+    .bg-delivery-800 { background-color: oklch(var(--delivery-800)); }
+    .bg-delivery-900 { background-color: oklch(var(--delivery-900)); }
+    .bg-delivery-950 { background-color: oklch(var(--delivery-950)); }
+    
+    .border-delivery-200 { border-color: oklch(var(--delivery-200)); }
+    .border-delivery-300 { border-color: oklch(var(--delivery-300)); }
+    .border-delivery-600 { border-color: oklch(var(--delivery-600)); }
+    .border-delivery-800 { border-color: oklch(var(--delivery-800)); }
+    
+    /* Restaurant App - Orange utilities */
+    .text-restaurant-50 { color: oklch(var(--restaurant-50)); }
+    .text-restaurant-100 { color: oklch(var(--restaurant-100)); }
+    .text-restaurant-200 { color: oklch(var(--restaurant-200)); }
+    .text-restaurant-300 { color: oklch(var(--restaurant-300)); }
+    .text-restaurant-400 { color: oklch(var(--restaurant-400)); }
+    .text-restaurant-500 { color: oklch(var(--restaurant-500)); }
+    .text-restaurant-600 { color: oklch(var(--restaurant-600)); }
+    .text-restaurant-700 { color: oklch(var(--restaurant-700)); }
+    .text-restaurant-800 { color: oklch(var(--restaurant-800)); }
+    .text-restaurant-900 { color: oklch(var(--restaurant-900)); }
+    .text-restaurant-950 { color: oklch(var(--restaurant-950)); }
+    
+    .bg-restaurant-50 { background-color: oklch(var(--restaurant-50)); }
+    .bg-restaurant-100 { background-color: oklch(var(--restaurant-100)); }
+    .bg-restaurant-200 { background-color: oklch(var(--restaurant-200)); }
+    .bg-restaurant-300 { background-color: oklch(var(--restaurant-300)); }
+    .bg-restaurant-400 { background-color: oklch(var(--restaurant-400)); }
+    .bg-restaurant-500 { background-color: oklch(var(--restaurant-500)); }
+    .bg-restaurant-600 { background-color: oklch(var(--restaurant-600)); }
+    .bg-restaurant-700 { background-color: oklch(var(--restaurant-700)); }
+    .bg-restaurant-800 { background-color: oklch(var(--restaurant-800)); }
+    .bg-restaurant-900 { background-color: oklch(var(--restaurant-900)); }
+    .bg-restaurant-950 { background-color: oklch(var(--restaurant-950)); }
+    
+    .border-restaurant-200 { border-color: oklch(var(--restaurant-200)); }
+    .border-restaurant-300 { border-color: oklch(var(--restaurant-300)); }
+    .border-restaurant-600 { border-color: oklch(var(--restaurant-600)); }
+    .border-restaurant-800 { border-color: oklch(var(--restaurant-800)); }
+    
+    /* Admin App - Slate utilities */
+    .text-admin-50 { color: oklch(var(--admin-50)); }
+    .text-admin-100 { color: oklch(var(--admin-100)); }
+    .text-admin-200 { color: oklch(var(--admin-200)); }
+    .text-admin-300 { color: oklch(var(--admin-300)); }
+    .text-admin-400 { color: oklch(var(--admin-400)); }
+    .text-admin-500 { color: oklch(var(--admin-500)); }
+    .text-admin-600 { color: oklch(var(--admin-600)); }
+    .text-admin-700 { color: oklch(var(--admin-700)); }
+    .text-admin-800 { color: oklch(var(--admin-800)); }
+    .text-admin-900 { color: oklch(var(--admin-900)); }
+    .text-admin-950 { color: oklch(var(--admin-950)); }
+    
+    .bg-admin-50 { background-color: oklch(var(--admin-50)); }
+    .bg-admin-100 { background-color: oklch(var(--admin-100)); }
+    .bg-admin-200 { background-color: oklch(var(--admin-200)); }
+    .bg-admin-300 { background-color: oklch(var(--admin-300)); }
+    .bg-admin-400 { background-color: oklch(var(--admin-400)); }
+    .bg-admin-500 { background-color: oklch(var(--admin-500)); }
+    .bg-admin-600 { background-color: oklch(var(--admin-600)); }
+    .bg-admin-700 { background-color: oklch(var(--admin-700)); }
+    .bg-admin-800 { background-color: oklch(var(--admin-800)); }
+    .bg-admin-900 { background-color: oklch(var(--admin-900)); }
+    .bg-admin-950 { background-color: oklch(var(--admin-950)); }
+    
+    .border-admin-200 { border-color: oklch(var(--admin-200)); }
+    .border-admin-300 { border-color: oklch(var(--admin-300)); }
+    .border-admin-600 { border-color: oklch(var(--admin-600)); }
+    .border-admin-800 { border-color: oklch(var(--admin-800)); }
+}
+

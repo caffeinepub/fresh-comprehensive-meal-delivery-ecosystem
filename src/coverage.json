@@ -1,0 +1,193 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-20T05:40:43.582Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 10,
+    "implemented": 7,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Rebuild the complete backend with all data models including Meal, Order, RestaurantProfile, DeliveryPartner, CustomerProfile, and DabbaBooking with their respective status enums and OTP authentication system supporting both Twilio SMS and email verification",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-10",
+        "summary": "Rebuild React Query integration with hooks for all backend operations including user profiles, meals, orders, reviews, bookings, subscriptions, delivery partners, and restaurant profiles with localStorage fallback",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/main.tsx",
+          "frontend/src/types/local.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Rebuild the multi-tenant PWA architecture with four standalone apps (Customer, Delivery, Restaurant, Admin) that can be detected and launched based on URL parameters, subdomains, or paths",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/apps/CustomerStandaloneApp.tsx",
+          "frontend/src/apps/DeliveryStandaloneApp.tsx",
+          "frontend/src/apps/RestaurantStandaloneApp.tsx",
+          "frontend/src/apps/AdminStandaloneApp.tsx",
+          "frontend/src/components/AppDirectory.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/apps/DeliveryStandaloneApp.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Rebuild authentication system supporting Internet Identity and OTP login (email and phone) for all four app types with profile setup flows",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useInternetIdentity.ts",
+          "frontend/src/hooks/useOtpAuth.ts",
+          "frontend/src/components/CustomerLoginPrompt.tsx",
+          "frontend/src/components/DeliveryLoginPrompt.tsx",
+          "frontend/src/components/RestaurantLoginPrompt.tsx",
+          "frontend/src/components/AdminLoginPrompt.tsx",
+          "frontend/src/components/CustomerProfileSetup.tsx",
+          "frontend/src/components/DeliveryProfileSetup.tsx",
+          "frontend/src/components/RestaurantProfileSetup.tsx",
+          "frontend/src/components/AdminProfileSetup.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useInternetIdentity.ts",
+          "frontend/src/components/DeliveryProfileSetup.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Rebuild customer app features including meal browsing, subscription ordering, dabba booking flow with pickup/drop addresses and time slots, order history, and booking management",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/HomePage.tsx",
+          "frontend/src/components/MealPlanFlow.tsx",
+          "frontend/src/components/BookingFlow.tsx",
+          "frontend/src/components/OrdersView.tsx",
+          "frontend/src/components/BookingsView.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Rebuild restaurant partner app with meal management (create, edit, image upload), order viewing, and revenue tracking dashboard",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/RestaurantApp.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Rebuild delivery partner app with availability toggle, assigned orders and bookings dashboard, status update controls, and earnings tracking",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/DeliveryApp.tsx",
+          "frontend/src/pages/EmployeeApp.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/DeliveryApp.tsx",
+          "frontend/src/pages/EmployeeApp.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Rebuild admin app with statistics dashboard, management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality, plus Twilio configuration panel",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AdminApp.tsx",
+          "frontend/src/components/TwilioConfig.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/Header.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AdminApp.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Rebuild PWA functionality with app-specific manifests for each tenant, service worker with aggressive caching strategies, install prompts, and offline support",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/public/manifest-customer.json",
+          "frontend/public/manifest-delivery.json",
+          "frontend/public/manifest-restaurant.json",
+          "frontend/public/manifest-admin.json",
+          "frontend/public/sw.js",
+          "frontend/src/components/InstallPrompt.tsx",
+          "frontend/src/components/InstallPromptFirst.tsx",
+          "frontend/index.html",
+          "frontend/src/lib/performance.ts"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-9",
+        "summary": "Rebuild theming system with OKLCH color schemes for each app variant (customer green, delivery blue, restaurant orange, admin slate) with light/dark mode support using Tailwind CSS",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js"
+        ],
+        "matchedFiles": []
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/blob-storage/Mixin.mo",
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "build-template/Dockerfile",
+    "build-template/LICENSE",
+    "build-template/README.md",
+    "build-template/deploy.sh",
+    "build-template/icp.yaml",
+    "build-template/src/backend/canister.yaml",
+    "build-template/src/frontend/canister.yaml",
+    "caffeine.lock.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/apps/DeliveryStandaloneApp.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/DeliveryProfileSetup.tsx",
+    "frontend/src/config.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminApp.tsx",
+    "frontend/src/pages/DeliveryApp.tsx",
+    "frontend/src/pages/EmployeeApp.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

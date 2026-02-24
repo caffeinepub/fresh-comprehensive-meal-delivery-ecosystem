@@ -1,0 +1,223 @@
+{
+  "kind": "build_request",
+  "title": "Rebuild complete dabbawala delivery app with all features",
+  "projectName": "Fresh Dabbawala",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Rebuild the complete backend with all data models including Meal, Order, RestaurantProfile, DeliveryPartner, CustomerProfile, and DabbaBooking with their respective status enums and OTP authentication system supporting both Twilio SMS and email verification",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All data types from backend/main.mo are recreated including Meal, Order, RestaurantProfile, DeliveryPartner, CustomerProfile, DabbaBooking",
+        "OTP authentication system supports both email and phone (Twilio) verification",
+        "Access control and state management functions are implemented",
+        "All CRUD operations for meals, orders, bookings, profiles are functional"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Rebuild the multi-tenant PWA architecture with four standalone apps (Customer, Delivery, Restaurant, Admin) that can be detected and launched based on URL parameters, subdomains, or paths",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App.tsx correctly detects and routes to customer, delivery, restaurant, or admin apps",
+        "Each app has its own standalone entry point component",
+        "URL parameter detection and session storage management works correctly",
+        "App directory page displays all four apps with launch buttons"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Rebuild authentication system supporting Internet Identity and OTP login (email and phone) for all four app types with profile setup flows",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Login prompts support Internet Identity, email OTP, and phone OTP for each app type",
+        "Phone OTP validates Indian phone numbers",
+        "Profile setup flows collect appropriate information for each user type",
+        "Session persistence works across page refreshes",
+        "OTP resend functionality with expiry handling"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Rebuild customer app features including meal browsing, subscription ordering, dabba booking flow with pickup/drop addresses and time slots, order history, and booking management",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Customer can browse meals and place subscription orders",
+        "Multi-step dabba booking flow collects addresses, time slots, and frequency",
+        "Order history displays with status badges and review submission",
+        "Booking view shows active bookings with cancel functionality",
+        "Home page displays booking and order summaries with lazy loading"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Rebuild restaurant partner app with meal management (create, edit, image upload), order viewing, and revenue tracking dashboard",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Restaurant can create and edit meals with image uploads",
+        "Order list displays incoming orders with details",
+        "Revenue tracking shows earnings from orders",
+        "Meal images are prefetched for performance"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Rebuild delivery partner app with availability toggle, assigned orders and bookings dashboard, status update controls, and earnings tracking",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Delivery partner can toggle availability status",
+        "Dashboard shows assigned meal orders and dabba bookings",
+        "Status updates can be applied to deliveries",
+        "Earnings are tracked and displayed",
+        "Separate tabs for meal orders and dabba bookings"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Rebuild admin app with statistics dashboard, management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality, plus Twilio configuration panel",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin dashboard displays key statistics",
+        "Management tables show customers, restaurants, delivery partners, and orders",
+        "CSV export functionality works for all data types",
+        "Twilio configuration panel allows setting up SMS credentials",
+        "All data tables are searchable and sortable"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Rebuild PWA functionality with app-specific manifests for each tenant, service worker with aggressive caching strategies, install prompts, and offline support",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each app type has its own PWA manifest with appropriate theme colors",
+        "Service worker implements versioned cache management for static, runtime, images, API, and fonts",
+        "Install prompts appear for first-time users",
+        "Apps work offline with cached data",
+        "Performance monitoring tracks Core Web Vitals"
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Rebuild theming system with OKLCH color schemes for each app variant (customer green, delivery blue, restaurant orange, admin slate) with light/dark mode support using Tailwind CSS",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each app type uses its designated color scheme",
+        "CSS custom properties define theme colors with OKLCH",
+        "Light and dark modes are supported",
+        "Shadcn UI components integrate with theme system",
+        "Theme colors persist across navigation"
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Rebuild React Query integration with hooks for all backend operations including user profiles, meals, orders, reviews, bookings, subscriptions, delivery partners, and restaurant profiles with localStorage fallback",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "Rebuild with same features"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All backend queries and mutations use React Query hooks",
+        "Data invalidation works correctly after mutations",
+        "localStorage provides fallback for offline scenarios",
+        "Loading and error states are properly handled",
+        "Actor instance management integrates with Internet Identity state"
+      ]
+    }
+  ],
+  "constraints": [
+    "Maintain the single-actor Motoko backend architecture",
+    "Preserve the multi-tenant PWA structure with four standalone apps",
+    "Keep the existing authentication flow supporting Internet Identity and OTP",
+    "Maintain the OKLCH color system and app-specific theming",
+    "Do not modify the read-only UI component paths listed in immutablePaths"
+  ],
+  "nonGoals": [
+    "Adding new features beyond what exists in the current codebase",
+    "Changing the technology stack or frameworks",
+    "Modifying the deployment or hosting infrastructure",
+    "Integrating third-party services beyond Twilio for SMS",
+    "Creating mobile native apps"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

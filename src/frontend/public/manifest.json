@@ -1,0 +1,27 @@
+{
+  "name": "Fresh - Home Cooked Meal Delivery",
+  "short_name": "Fresh",
+  "description": "Fresh ecosystem for customers, delivery partners, restaurants, and admins",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/assets/generated/customer-app-icon-transparent.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/customer-app-icon-transparent.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "lifestyle", "business"],
+  "screenshots": []
+}

@@ -1,0 +1,357 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Rebuild Fresh Dabbawala Multi-Tenant PWA with Complete Features",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Rebuild multi-tenant PWA architecture with four standalone apps (Customer, Delivery, Restaurant, Admin) that can be detected and launched based on URL parameters, subdomains, or paths",
+      "acceptanceCriteria": [
+        "App.tsx correctly detects and routes to customer, delivery, restaurant, or admin apps",
+        "Each app has its own standalone entry point component",
+        "URL parameter detection and session storage management works correctly",
+        "App directory page displays all four apps with launch buttons"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Verify and update app type detection logic to support URL parameters (?app=customer/delivery/restaurant/admin), subdomain detection, and path-based routing. Ensure dynamic PWA manifest switching based on detected app type. Update session storage management for app persistence."
+        },
+        {
+          "path": "frontend/src/apps/CustomerStandaloneApp.tsx",
+          "operation": "modify",
+          "description": "Verify customer app entry point handles authentication flow, profile setup, service worker registration, and renders customer interface with proper loading states"
+        },
+        {
+          "path": "frontend/src/apps/DeliveryStandaloneApp.tsx",
+          "operation": "modify",
+          "description": "Verify delivery partner app entry point handles authentication flow, profile setup, service worker registration, and renders delivery interface with proper loading states"
+        },
+        {
+          "path": "frontend/src/apps/RestaurantStandaloneApp.tsx",
+          "operation": "modify",
+          "description": "Verify restaurant partner app entry point handles authentication flow, profile setup, service worker registration, and renders restaurant interface with proper loading states"
+        },
+        {
+          "path": "frontend/src/apps/AdminStandaloneApp.tsx",
+          "operation": "modify",
+          "description": "Verify admin app entry point handles authentication flow, profile setup, service worker registration, and renders admin interface with proper loading states"
+        },
+        {
+          "path": "frontend/src/components/AppDirectory.tsx",
+          "operation": "modify",
+          "description": "Verify app directory displays all four Fresh ecosystem apps (Customer, Delivery, Restaurant, Admin) with descriptions, features, icons using generated images (frontend/public/assets/generated/customer-app-icon-transparent.dim_192x192.png, frontend/public/assets/generated/delivery-app-icon-transparent.dim_192x192.png, frontend/public/assets/generated/restaurant-app-icon-transparent.dim_192x192.png, frontend/public/assets/generated/admin-app-icon-transparent.dim_192x192.png), and install/launch buttons"
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Rebuild authentication system supporting Internet Identity and OTP login (email and phone) for all four app types with profile setup flows",
+      "acceptanceCriteria": [
+        "Login prompts support Internet Identity, email OTP, and phone OTP for each app type",
+        "Phone OTP validates Indian phone numbers",
+        "Profile setup flows collect appropriate information for each user type",
+        "Session persistence works across page refreshes",
+        "OTP resend functionality with expiry handling"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useInternetIdentity.ts",
+          "operation": "modify",
+          "description": "Verify Internet Identity authentication hook manages login state, identity persistence, delegation validation, and provides clear/logout functionality. Use the authorization component's authentication system with role-based access control."
+        },
+        {
+          "path": "frontend/src/hooks/useOtpAuth.ts",
+          "operation": "modify",
+          "description": "Verify OTP authentication hook manages send, verify, and resend operations for both email and phone OTP with session persistence in localStorage, expiry handling, and authentication state management using backend sendEmailOtp, verifyEmailOtp, sendPhoneOtp, verifyPhoneOtp methods"
+        },
+        {
+          "path": "frontend/src/components/CustomerLoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Verify multi-tab login component supports Internet Identity, email OTP, and phone OTP (Indian numbers only) with validation, resend logic, and toast notifications. Use authorization component's authentication patterns."
+        },
+        {
+          "path": "frontend/src/components/DeliveryLoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Verify delivery partner login component supports Internet Identity, email OTP, and phone OTP (Indian numbers only) with verification code handling and proper error states"
+        },
+        {
+          "path": "frontend/src/components/RestaurantLoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Verify restaurant partner login component with tabbed interface supports Internet Identity, email OTP, and phone OTP (Indian numbers only) with validation and toast notifications"
+        },
+        {
+          "path": "frontend/src/components/AdminLoginPrompt.tsx",
+          "operation": "modify",
+          "description": "Verify admin login component with tabbed interface supports Internet Identity, email OTP, and phone OTP (Indian numbers only) with OTP sending, verification, resending with validation, and error messages"
+        },
+        {
+          "path": "frontend/src/components/CustomerProfileSetup.tsx",
+          "operation": "modify",
+          "description": "Verify customer onboarding form collects name and address, sequentially calls useSaveCallerUserProfile (from authorization component) and useCreateCustomerProfile mutations with loading states and error handling"
+        },
+        {
+          "path": "frontend/src/components/DeliveryProfileSetup.tsx",
+          "operation": "modify",
+          "description": "Verify delivery partner profile form collects name and creates both user profile (using authorization component's saveCallerUserProfile) and delivery-specific profile via mutations"
+        },
+        {
+          "path": "frontend/src/components/RestaurantProfileSetup.tsx",
+          "operation": "modify",
+          "description": "Verify restaurant profile form collects name, description, and operating hours, then saves both user profile (using authorization component's saveCallerUserProfile) and restaurant-specific profile via mutations"
+        },
+        {
+          "path": "frontend/src/components/AdminProfileSetup.tsx",
+          "operation": "modify",
+          "description": "Verify admin profile setup form collects name and saves profile using authorization component's saveCallerUserProfile mutation with validation and loading states"
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify React Query hooks for user profiles use authorization component's getCallerUserProfile and saveCallerUserProfile backend methods. Ensure proper integration with OTP authentication hooks for email/phone linking using linkEmailToProfile and linkPhoneToProfile backend methods."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Rebuild customer app features including meal browsing, subscription ordering, dabba booking flow with pickup/drop addresses and time slots, order history, and booking management",
+      "acceptanceCriteria": [
+        "Customer can browse meals and place subscription orders",
+        "Multi-step dabba booking flow collects addresses, time slots, and frequency",
+        "Order history displays with status badges and review submission",
+        "Booking view shows active bookings with cancel functionality",
+        "Home page displays booking and order summaries with lazy loading"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Verify customer home page displays booking and order summaries with lazy-loaded views for creating bookings, meal plans, and viewing bookings/orders. Include background prefetching for performance. Use frontend/public/assets/generated/fresh-logo.dim_200x200.png for branding."
+        },
+        {
+          "path": "frontend/src/components/MealPlanFlow.tsx",
+          "operation": "modify",
+          "description": "Verify multi-step flow component for browsing meals, selecting subscription types, specifying quantities, and placing orders with loading and empty states. Display meal images using frontend/public/assets/generated/sample-meal.dim_400x300.jpg as placeholder/fallback."
+        },
+        {
+          "path": "frontend/src/components/BookingFlow.tsx",
+          "operation": "modify",
+          "description": "Verify multi-step booking flow component for dabba pickup service collects pickup/drop addresses, time slots, and subscription frequency, then submits via useCreateDabbaBooking mutation"
+        },
+        {
+          "path": "frontend/src/components/OrdersView.tsx",
+          "operation": "modify",
+          "description": "Verify customer order history view displays order details with status badges and allows users to submit reviews for delivered orders using proper React Query hooks"
+        },
+        {
+          "path": "frontend/src/components/BookingsView.tsx",
+          "operation": "modify",
+          "description": "Verify customer dabba pickup bookings display with details (addresses, time slots, frequency), status badges, and cancel functionality using React Query hooks"
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify React Query hooks for meals, orders, reviews, dabba bookings, and subscriptions with backend actor integration and localStorage fallback for offline support"
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Rebuild restaurant partner app with meal management (create, edit, image upload), order viewing, and revenue tracking dashboard",
+      "acceptanceCriteria": [
+        "Restaurant can create and edit meals with image uploads",
+        "Order list displays incoming orders with details",
+        "Revenue tracking shows earnings from orders",
+        "Meal images are prefetched for performance"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/RestaurantApp.tsx",
+          "operation": "modify",
+          "description": "Verify restaurant partner dashboard for managing meals (create, edit, upload images using blob-storage component) and viewing orders with revenue tracking. Use the blob-storage component to handle meal image uploads: create ExternalBlob instances from uploaded files using ExternalBlob.fromBytes(), track upload progress with withUploadProgress(), and display images using getDirectURL() for streaming and caching. Include lazy loading and image prefetching. Display hero image using frontend/public/assets/generated/restaurant-hero.dim_800x600.jpg. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify React Query hooks for restaurant profiles, meals, and orders with proper mutation invalidation. Ensure meal image handling integrates with blob-storage component's ExternalBlob type for upload and display operations."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Rebuild delivery partner app with availability toggle, assigned orders and bookings dashboard, status update controls, and earnings tracking",
+      "acceptanceCriteria": [
+        "Delivery partner can toggle availability status",
+        "Dashboard shows assigned meal orders and dabba bookings",
+        "Status updates can be applied to deliveries",
+        "Earnings are tracked and displayed",
+        "Separate tabs for meal orders and dabba bookings"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/DeliveryApp.tsx",
+          "operation": "modify",
+          "description": "Verify delivery partner dashboard for managing availability status, viewing assigned orders and dabba bookings, and updating delivery statuses with earnings tracking. Display hero image using frontend/public/assets/generated/delivery-hero.dim_800x600.jpg."
+        },
+        {
+          "path": "frontend/src/pages/EmployeeApp.tsx",
+          "operation": "modify",
+          "description": "Verify delivery executive portal page with availability toggle, active deliveries dashboard, and tabs for managing meal orders and dabba bookings with status updates"
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify React Query hooks for delivery partners with mutations for availability toggle, status updates, and earnings tracking with proper cache invalidation"
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Rebuild admin app with statistics dashboard, management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality, plus Twilio configuration panel",
+      "acceptanceCriteria": [
+        "Admin dashboard displays key statistics",
+        "Management tables show customers, restaurants, delivery partners, and orders",
+        "CSV export functionality works for all data types",
+        "Twilio configuration panel allows setting up SMS credentials",
+        "All data tables are searchable and sortable"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AdminApp.tsx",
+          "operation": "modify",
+          "description": "Verify admin dashboard displays statistics and management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality and Twilio configuration. Use the authorization component to restrict access (admin-only). Display hero image using frontend/public/assets/generated/admin-dashboard.dim_800x600.jpg."
+        },
+        {
+          "path": "frontend/src/components/TwilioConfig.tsx",
+          "operation": "modify",
+          "description": "Verify admin configuration component for setting up Twilio SMS credentials (account SID, auth token, phone number) using backend setTwilioConfiguration and isTwilioConfigured methods to enable phone OTP login across all Fresh apps"
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify React Query hooks for admin operations including Twilio configuration management, user management, and data export functionality with proper authorization checks"
+        },
+        {
+          "path": "frontend/src/components/Header.tsx",
+          "operation": "modify",
+          "description": "Verify application header displays logo using frontend/public/assets/generated/fresh-logo.dim_200x200.png, user role (customer/admin/delivery/restaurant), and dropdown menu with user profile and logout functionality using authorization component's authentication state"
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Rebuild PWA functionality with app-specific manifests for each tenant, service worker with aggressive caching strategies, install prompts, and offline support",
+      "acceptanceCriteria": [
+        "Each app type has its own PWA manifest with appropriate theme colors",
+        "Service worker implements versioned cache management for static, runtime, images, API, and fonts",
+        "Install prompts appear for first-time users",
+        "Apps work offline with cached data",
+        "Performance monitoring tracks Core Web Vitals"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/manifest-customer.json",
+          "operation": "modify",
+          "description": "Verify PWA manifest for Fresh Customer app with branding, icons (using frontend/public/assets/generated/customer-app-icon-transparent.dim_192x192.png and frontend/public/assets/generated/customer-app-icon-transparent.dim_512x512.png), theme colors (green #10b981), and metadata for home-cooked meal delivery and dabba pickup services"
+        },
+        {
+          "path": "frontend/public/manifest-delivery.json",
+          "operation": "modify",
+          "description": "Verify PWA manifest for Fresh Delivery partner app with blue theme (#3b82f6), icons (using frontend/public/assets/generated/delivery-app-icon-transparent.dim_192x192.png and frontend/public/assets/generated/delivery-app-icon-transparent.dim_512x512.png), and metadata for delivery management and earnings tracking"
+        },
+        {
+          "path": "frontend/public/manifest-restaurant.json",
+          "operation": "modify",
+          "description": "Verify PWA manifest for restaurant partner portal app with orange theme, icons (using frontend/public/assets/generated/restaurant-app-icon-transparent.dim_192x192.png and frontend/public/assets/generated/restaurant-app-icon-transparent.dim_512x512.png), and display settings for mobile installation"
+        },
+        {
+          "path": "frontend/public/manifest-admin.json",
+          "operation": "modify",
+          "description": "Verify PWA manifest for admin app with slate theme color, admin-specific icons (using frontend/public/assets/generated/admin-app-icon-transparent.dim_192x192.png and frontend/public/assets/generated/admin-app-icon-transparent.dim_512x512.png), and business/productivity categories"
+        },
+        {
+          "path": "frontend/public/sw.js",
+          "operation": "modify",
+          "description": "Verify service worker implements aggressive caching strategies with versioned cache management, precaching critical assets, and handling different cache types (static, runtime, images, API, fonts, prefetch) with size limits and expiration for offline support"
+        },
+        {
+          "path": "frontend/src/components/InstallPrompt.tsx",
+          "operation": "modify",
+          "description": "Verify PWA install prompt component detects beforeinstallprompt events and displays dismissible card encouraging users to install the app with app-type-specific styling"
+        },
+        {
+          "path": "frontend/src/components/InstallPromptFirst.tsx",
+          "operation": "modify",
+          "description": "Verify first-time PWA installation prompt component detects installability, handles beforeinstallprompt event, and guides users to install. Skip automatically if already installed or previously seen in session"
+        },
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Verify PWA-optimized HTML entry point with inline critical CSS, performance monitoring scripts, preloaded assets, and Web Vitals tracking for instant first paint and progressive enhancement"
+        },
+        {
+          "path": "frontend/src/lib/performance.ts",
+          "operation": "modify",
+          "description": "Verify performance monitoring utilities for marking milestones, measuring durations, tracking Core Web Vitals (LCP, FID, CLS, FCP, TTFB), and logging startup metrics with ratings"
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Rebuild theming system with OKLCH color schemes for each app variant (customer green, delivery blue, restaurant orange, admin slate) with light/dark mode support using Tailwind CSS",
+      "acceptanceCriteria": [
+        "Each app type uses its designated color scheme",
+        "CSS custom properties define theme colors with OKLCH",
+        "Light and dark modes are supported",
+        "Shadcn UI components integrate with theme system",
+        "Theme colors persist across navigation"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Verify global CSS defines Tailwind layers and CSS custom properties for theming including color schemes for customer (fresh/green), delivery (blue), restaurant (orange), and admin (slate) apps with light/dark mode support using OKLCH color system"
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Verify Tailwind CSS configuration with OKLCH color system defining theme colors for multiple app variants (fresh, delivery, restaurant, admin) plus shadcn/ui design tokens and custom animations"
+        }
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "summary": "Rebuild React Query integration with hooks for all backend operations including user profiles, meals, orders, reviews, bookings, subscriptions, delivery partners, and restaurant profiles with localStorage fallback",
+      "acceptanceCriteria": [
+        "All backend queries and mutations use React Query hooks",
+        "Data invalidation works correctly after mutations",
+        "localStorage provides fallback for offline scenarios",
+        "Loading and error states are properly handled",
+        "Actor instance management integrates with Internet Identity state"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Verify React Query hook creates and manages backend actor instance based on Internet Identity authentication state from authorization component, invalidating dependent queries when identity changes. Ensure integration with authorization component's authentication initialization."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Verify comprehensive React Query hooks for all backend operations: user profiles (using authorization component's getCallerUserProfile/saveCallerUserProfile), OTP authentication (email/phone using linkEmailToProfile/linkPhoneToProfile), meals, orders, reviews, dabba bookings, subscriptions, delivery partners, and restaurant profiles with backend actor integration and localStorage fallback for offline support. Ensure proper query invalidation after mutations."
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Verify application entry point sets up React Query client, Internet Identity provider (from authorization component), and renders root App component with necessary context providers"
+        },
+        {
+          "path": "frontend/src/types/local.ts",
+          "operation": "modify",
+          "description": "Verify TypeScript type definitions for frontend data structures including UserProfile, Meal, Order, CustomerProfile, RestaurantProfile, DeliveryPartner, Review, DabbaBooking, and various enums for order status, delivery status, subscription types, and pickup slots match backend interface"
+        }
+      ]
+    }
+  ]
+}

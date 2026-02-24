@@ -1,0 +1,164 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-rebuild-the-multi-tenant-pwa-architecture-with-four-standalone-apps-customer-delivery-restaurant-admin-that-can-be-detected-and-launched-based-on-url-parameters-subdomains-or-paths",
+      "featureTitle": "Rebuild the multi-tenant PWA architecture with four standalone apps (Customer, Delivery, Restaurant, Admin) that can be detected and launched based on URL parameters, subdomains, or paths",
+      "files": [
+        "frontend/src/apps/DeliveryStandaloneApp.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-authentication-system-supporting-internet-identity-and-otp-login-email-and-phone-for-all-four-app-types-with-profile-setup-flows",
+      "featureTitle": "Rebuild authentication system supporting Internet Identity and OTP login (email and phone) for all four app types with profile setup flows",
+      "files": [
+        "frontend/src/components/DeliveryProfileSetup.tsx",
+        "frontend/src/hooks/useInternetIdentity.ts",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-customer-app-features-including-meal-browsing-subscription-ordering-dabba-booking-flow-with-pickup-drop-addresses-and-time-slots-order-history-and-booking-management",
+      "featureTitle": "Rebuild customer app features including meal browsing, subscription ordering, dabba booking flow with pickup/drop addresses and time slots, order history, and booking management",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-restaurant-partner-app-with-meal-management-create-edit-image-upload-order-viewing-and-revenue-tracking-dashboard",
+      "featureTitle": "Rebuild restaurant partner app with meal management (create, edit, image upload), order viewing, and revenue tracking dashboard",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-delivery-partner-app-with-availability-toggle-assigned-orders-and-bookings-dashboard-status-update-controls-and-earnings-tracking",
+      "featureTitle": "Rebuild delivery partner app with availability toggle, assigned orders and bookings dashboard, status update controls, and earnings tracking",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/DeliveryApp.tsx",
+        "frontend/src/pages/EmployeeApp.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-admin-app-with-statistics-dashboard-management-interfaces-for-customers-restaurants-delivery-partners-and-orders-with-csv-export-functionality-plus-twilio-configuration-panel",
+      "featureTitle": "Rebuild admin app with statistics dashboard, management interfaces for customers, restaurants, delivery partners, and orders with CSV export functionality, plus Twilio configuration panel",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminApp.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-rebuild-react-query-integration-with-hooks-for-all-backend-operations-including-user-profiles-meals-orders-reviews-bookings-subscriptions-delivery-partners-and-restaurant-profiles-with-localstorage-fallback",
+      "featureTitle": "Rebuild React Query integration with hooks for all backend operations including user profiles, meals, orders, reviews, bookings, subscriptions, delivery partners, and restaurant profiles with localStorage fallback",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-10"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

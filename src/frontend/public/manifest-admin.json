@@ -1,0 +1,27 @@
+{
+  "name": "Fresh Admin - Management Portal",
+  "short_name": "Fresh Admin",
+  "description": "Manage the Fresh ecosystem with comprehensive admin controls",
+  "start_url": "/?app=admin",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#64748b",
+  "orientation": "portrait",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/assets/generated/admin-app-icon-transparent.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/admin-app-icon-transparent.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": []
+}

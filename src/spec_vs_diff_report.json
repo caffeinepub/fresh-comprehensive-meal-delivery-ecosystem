@@ -1,0 +1,125 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-20T05:40:43.578Z",
+  "summary": "The diff shows significant implementation of backend data models, OTP authentication, and partial frontend implementations. However, the diff is heavily truncated, making it difficult to verify completeness of all requirements. Many frontend components and flows are referenced but not fully visible in the diff content.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "App directory page displays all four apps with launch buttons",
+      "reason": "App.tsx is modified but content is not shown in diff to verify if the directory page with all four launch buttons exists",
+      "evidence": []
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "OTP resend functionality with expiry handling",
+      "reason": "Backend shows OTP storage and verification but no evidence of resend functionality or expiry handling logic",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Order history displays with status badges and review submission",
+      "reason": "OrdersView.tsx is mentioned in file summaries but actual implementation is not visible in diff",
+      "evidence": []
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Booking view shows active bookings with cancel functionality",
+      "reason": "BookingsView.tsx is mentioned in file summaries but actual implementation is not visible in diff",
+      "evidence": []
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Home page displays booking and order summaries with lazy loading",
+      "reason": "HomePage.tsx referenced in summaries but not shown in diff to verify lazy loading implementation",
+      "evidence": []
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Order list displays incoming orders with details",
+      "reason": "RestaurantApp.tsx is truncated; cannot verify order list display implementation",
+      "evidence": [
+        "frontend/src/pages/RestaurantApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Revenue tracking shows earnings from orders",
+      "reason": "RestaurantApp.tsx is truncated; cannot verify revenue tracking implementation",
+      "evidence": [
+        "frontend/src/pages/RestaurantApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Separate tabs for meal orders and dabba bookings",
+      "reason": "DeliveryApp.tsx is truncated; tabs structure not fully visible in diff",
+      "evidence": [
+        "frontend/src/pages/DeliveryApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "All data tables are searchable and sortable",
+      "reason": "AdminApp.tsx is truncated; cannot verify search and sort functionality in data tables",
+      "evidence": [
+        "frontend/src/pages/AdminApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Install prompts appear for first-time users",
+      "reason": "InstallPromptFirst component is referenced but actual implementation not visible in diff",
+      "evidence": [
+        "frontend/src/apps/DeliveryStandaloneApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Performance monitoring tracks Core Web Vitals",
+      "reason": "Performance monitoring functions are called but implementation details not visible in diff",
+      "evidence": [
+        "frontend/src/apps/DeliveryStandaloneApp.tsx"
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "requirement": "Theme colors persist across navigation",
+      "reason": "No evidence in diff of theme persistence mechanism across navigation",
+      "evidence": []
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Stripe integration in backend with StripeConfiguration type and migration module",
+      "reason": "BuildRequest makes no mention of payment processing, Stripe integration, or payment configuration. Non-goals explicitly state no third-party services beyond Twilio for SMS",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "description": "EmployeeApp component separate from DeliveryApp",
+      "reason": "BuildRequest specifies four apps (Customer, Delivery, Restaurant, Admin). EmployeeApp appears to be a duplicate of DeliveryApp functionality not requested",
+      "evidence": [
+        "frontend/src/pages/EmployeeApp.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.65,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/apps/DeliveryStandaloneApp.tsx",
+    "frontend/src/components/DeliveryProfileSetup.tsx",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminApp.tsx",
+    "frontend/src/pages/DeliveryApp.tsx",
+    "frontend/src/pages/EmployeeApp.tsx",
+    "project_state.json"
+  ]
+}
