@@ -1,15 +1,24 @@
-import { useState } from 'react';
-import { useSaveCallerUserProfile, useCreateCustomerProfile } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useCreateCustomerProfile,
+  useSaveCallerUserProfile,
+} from "../hooks/useQueries";
 
 export default function CustomerProfileSetup() {
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const saveProfile = useSaveCallerUserProfile();
   const createCustomerProfile = useCreateCustomerProfile();
@@ -18,12 +27,12 @@ export default function CustomerProfileSetup() {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error('Please enter your name');
+      toast.error("Please enter your name");
       return;
     }
 
     if (!address.trim()) {
-      toast.error('Please enter your address');
+      toast.error("Please enter your address");
       return;
     }
 
@@ -31,26 +40,30 @@ export default function CustomerProfileSetup() {
 
     try {
       // Save user profile first
-      await saveProfile.mutateAsync({ name: name.trim(), userType: 'customer' });
-      
-      // Then create customer-specific profile
-      await createCustomerProfile.mutateAsync({ 
-        name: name.trim(), 
-        address: address.trim() 
+      await saveProfile.mutateAsync({
+        name: name.trim(),
+        userType: "customer",
       });
-      
-      toast.success('Profile created successfully! Welcome to Fresh!');
-      
+
+      // Then create customer-specific profile
+      await createCustomerProfile.mutateAsync({
+        name: name.trim(),
+        address: address.trim(),
+      });
+
+      toast.success("Profile created successfully! Welcome to Fresh!");
+
       // Small delay to ensure queries refetch before UI updates
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create profile');
-      console.error('Profile creation error:', error);
+      toast.error(error.message || "Failed to create profile");
+      console.error("Profile creation error:", error);
       setIsSubmitting(false);
     }
   };
 
-  const isLoading = isSubmitting || saveProfile.isPending || createCustomerProfile.isPending;
+  const isLoading =
+    isSubmitting || saveProfile.isPending || createCustomerProfile.isPending;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-fresh-50 via-background to-fresh-100/50 p-4">
@@ -85,18 +98,14 @@ export default function CustomerProfileSetup() {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Profile...
                 </>
               ) : (
-                'Continue'
+                "Continue"
               )}
             </Button>
           </form>

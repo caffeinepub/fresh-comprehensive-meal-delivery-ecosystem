@@ -10,6 +10,21 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface DabbaBooking {
+  'id' : string,
+  'status' : DabbaStatusEnum,
+  'pickupAddress' : string,
+  'slotTime' : PickupSlotEnum,
+  'customerId' : Principal,
+  'frequency' : SubscriptionTypeEnum,
+  'dropAddress' : string,
+  'deliveryPartnerId' : [] | [Principal],
+}
+export type DabbaStatusEnum = { 'cancelled' : null } |
+  { 'pending' : null } |
+  { 'inTransit' : null } |
+  { 'pickedUp' : null } |
+  { 'delivered' : null };
 export type Email = string;
 export type OtpCode = string;
 export type OtpStatus = { 'verified' : null } |
@@ -24,6 +39,8 @@ export type OtpStatus = { 'verified' : null } |
   { 'twilioError' : string } |
   { 'smsFailed' : string };
 export type PhoneNumber = string;
+export type PickupSlotEnum = { 'morning' : null } |
+  { 'midMorning' : null };
 export interface ShoppingItem {
   'productName' : string,
   'currency' : string,
@@ -39,6 +56,9 @@ export type StripeSessionStatus = {
     'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
   } |
   { 'failed' : { 'error' : string } };
+export type SubscriptionTypeEnum = { 'none' : null } |
+  { 'daily' : null } |
+  { 'weekly' : null };
 export interface TransformationInput {
   'context' : Uint8Array,
   'response' : http_request_result,
@@ -95,6 +115,7 @@ export interface _SERVICE {
     [Array<ShoppingItem>, string, string],
     string
   >,
+  'getAssignedBookings' : ActorMethod<[string], Array<string>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
@@ -112,6 +133,7 @@ export interface _SERVICE {
   'setTwilioConfiguration' : ActorMethod<[TwilioConfiguration], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'twilioTransform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'updateBooking' : ActorMethod<[DabbaBooking], undefined>,
   'verifyEmailOtp' : ActorMethod<[Email, OtpCode], OtpStatus>,
   'verifyPhoneOtp' : ActorMethod<[PhoneNumber, OtpCode], OtpStatus>,
 }

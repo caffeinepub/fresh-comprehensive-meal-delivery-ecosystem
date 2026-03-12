@@ -1,17 +1,26 @@
-import { useState } from 'react';
-import { useSaveCallerUserProfile, useCreateRestaurantProfile } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useCreateRestaurantProfile,
+  useSaveCallerUserProfile,
+} from "../hooks/useQueries";
 
 export default function RestaurantProfileSetup() {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [operatingHours, setOperatingHours] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [operatingHours, setOperatingHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const saveProfile = useSaveCallerUserProfile();
   const createRestaurantProfile = useCreateRestaurantProfile();
@@ -20,17 +29,17 @@ export default function RestaurantProfileSetup() {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error('Please enter restaurant name');
+      toast.error("Please enter restaurant name");
       return;
     }
 
     if (!description.trim()) {
-      toast.error('Please enter a description');
+      toast.error("Please enter a description");
       return;
     }
 
     if (!operatingHours.trim()) {
-      toast.error('Please enter operating hours');
+      toast.error("Please enter operating hours");
       return;
     }
 
@@ -38,34 +47,40 @@ export default function RestaurantProfileSetup() {
 
     try {
       // Save user profile first
-      await saveProfile.mutateAsync({ name: name.trim(), userType: 'restaurant' });
-      
+      await saveProfile.mutateAsync({
+        name: name.trim(),
+        userType: "restaurant",
+      });
+
       // Then create restaurant-specific profile
       await createRestaurantProfile.mutateAsync({
         name: name.trim(),
         description: description.trim(),
         operatingHours: operatingHours.trim(),
       });
-      
-      toast.success('Profile created successfully! Awaiting admin activation.');
-      
+
+      toast.success("Profile created successfully! Awaiting admin activation.");
+
       // Small delay to ensure queries refetch before UI updates
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create profile');
-      console.error('Profile creation error:', error);
+      toast.error(error.message || "Failed to create profile");
+      console.error("Profile creation error:", error);
       setIsSubmitting(false);
     }
   };
 
-  const isLoading = isSubmitting || saveProfile.isPending || createRestaurantProfile.isPending;
+  const isLoading =
+    isSubmitting || saveProfile.isPending || createRestaurantProfile.isPending;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-orange-50 via-background to-orange-100/50 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
           <CardTitle>Welcome to Fresh Restaurant!</CardTitle>
-          <CardDescription>Let's set up your restaurant profile</CardDescription>
+          <CardDescription>
+            Let's set up your restaurant profile
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -117,7 +132,7 @@ export default function RestaurantProfileSetup() {
                   Creating Profile...
                 </>
               ) : (
-                'Continue'
+                "Continue"
               )}
             </Button>
           </form>

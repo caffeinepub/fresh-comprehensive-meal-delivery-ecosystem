@@ -1,22 +1,33 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Star, Package } from 'lucide-react';
-import { useGetCustomerOrders, useSubmitReview } from '../hooks/useQueries';
-import { SubscriptionTypeEnum } from '../types/local';
-import type { Order } from '../types/local';
-import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Package, Star } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useGetCustomerOrders, useSubmitReview } from "../hooks/useQueries";
+import { SubscriptionTypeEnum } from "../types/local";
+import type { Order } from "../types/local";
 
 export default function OrdersView() {
   const { data: orders = [], isLoading } = useGetCustomerOrders();
   const submitReview = useSubmitReview();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
 
   const handleSubmitReview = async () => {
     if (!selectedOrder) return;
@@ -27,12 +38,12 @@ export default function OrdersView() {
         rating: BigInt(rating),
         comment,
       });
-      toast.success('Review submitted successfully!');
+      toast.success("Review submitted successfully!");
       setSelectedOrder(null);
       setRating(5);
-      setComment('');
-    } catch (error) {
-      toast.error('Failed to submit review');
+      setComment("");
+    } catch (_error) {
+      toast.error("Failed to submit review");
     }
   };
 
@@ -40,7 +51,7 @@ export default function OrdersView() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto mb-4"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto mb-4" />
           <p className="text-muted-foreground">Loading orders...</p>
         </div>
       </div>
@@ -52,7 +63,9 @@ export default function OrdersView() {
       <div className="text-center py-12">
         <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
-        <p className="text-muted-foreground mb-4">Start by ordering your first meal</p>
+        <p className="text-muted-foreground mb-4">
+          Start by ordering your first meal
+        </p>
       </div>
     );
   }
@@ -67,7 +80,9 @@ export default function OrdersView() {
                 <CardTitle className="text-lg">Order #{order.id}</CardTitle>
                 <CardDescription>Meal ID: {order.mealId}</CardDescription>
               </div>
-              <Badge variant={order.status === 'delivered' ? 'default' : 'secondary'}>
+              <Badge
+                variant={order.status === "delivered" ? "default" : "secondary"}
+              >
                 {order.status}
               </Badge>
             </div>
@@ -79,13 +94,19 @@ export default function OrdersView() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total Price</span>
-              <span className="font-medium">₹{order.totalPrice.toString()}</span>
+              <span className="font-medium">
+                ₹{order.totalPrice.toString()}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Subscription</span>
-              <span className="font-medium capitalize">{order.subscriptionType}</span>
+              <span className="text-sm text-muted-foreground">
+                Subscription
+              </span>
+              <span className="font-medium capitalize">
+                {order.subscriptionType}
+              </span>
             </div>
-            {order.status === 'delivered' && (
+            {order.status === "delivered" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -100,7 +121,10 @@ export default function OrdersView() {
         </Card>
       ))}
 
-      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+      <Dialog
+        open={!!selectedOrder}
+        onOpenChange={() => setSelectedOrder(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Leave a Review</DialogTitle>
@@ -111,13 +135,16 @@ export default function OrdersView() {
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <button
+                    type="button"
                     key={value}
                     onClick={() => setRating(value)}
                     className="focus:outline-none"
                   >
                     <Star
                       className={`h-8 w-8 ${
-                        value <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                        value <= rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       }`}
                     />
                   </button>
@@ -134,8 +161,12 @@ export default function OrdersView() {
                 rows={4}
               />
             </div>
-            <Button onClick={handleSubmitReview} disabled={submitReview.isPending} className="w-full">
-              {submitReview.isPending ? 'Submitting...' : 'Submit Review'}
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submitReview.isPending}
+              className="w-full"
+            >
+              {submitReview.isPending ? "Submitting..." : "Submit Review"}
             </Button>
           </div>
         </DialogContent>

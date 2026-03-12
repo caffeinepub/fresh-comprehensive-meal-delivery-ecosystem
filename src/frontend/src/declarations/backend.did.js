@@ -84,6 +84,32 @@ export const TransformationOutput = IDL.Record({
   'body' : IDL.Vec(IDL.Nat8),
   'headers' : IDL.Vec(http_header),
 });
+export const DabbaStatusEnum = IDL.Variant({
+  'cancelled' : IDL.Null,
+  'pending' : IDL.Null,
+  'inTransit' : IDL.Null,
+  'pickedUp' : IDL.Null,
+  'delivered' : IDL.Null,
+});
+export const PickupSlotEnum = IDL.Variant({
+  'morning' : IDL.Null,
+  'midMorning' : IDL.Null,
+});
+export const SubscriptionTypeEnum = IDL.Variant({
+  'none' : IDL.Null,
+  'daily' : IDL.Null,
+  'weekly' : IDL.Null,
+});
+export const DabbaBooking = IDL.Record({
+  'id' : IDL.Text,
+  'status' : DabbaStatusEnum,
+  'pickupAddress' : IDL.Text,
+  'slotTime' : PickupSlotEnum,
+  'customerId' : IDL.Principal,
+  'frequency' : SubscriptionTypeEnum,
+  'dropAddress' : IDL.Text,
+  'deliveryPartnerId' : IDL.Opt(IDL.Principal),
+});
 export const OtpCode = IDL.Text;
 
 export const idlService = IDL.Service({
@@ -119,6 +145,7 @@ export const idlService = IDL.Service({
       [IDL.Text],
       [],
     ),
+  'getAssignedBookings' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
@@ -148,6 +175,7 @@ export const idlService = IDL.Service({
       [TransformationOutput],
       ['query'],
     ),
+  'updateBooking' : IDL.Func([DabbaBooking], [], []),
   'verifyEmailOtp' : IDL.Func([Email, OtpCode], [OtpStatus], []),
   'verifyPhoneOtp' : IDL.Func([PhoneNumber, OtpCode], [OtpStatus], []),
 });
@@ -225,6 +253,32 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(http_header),
   });
+  const DabbaStatusEnum = IDL.Variant({
+    'cancelled' : IDL.Null,
+    'pending' : IDL.Null,
+    'inTransit' : IDL.Null,
+    'pickedUp' : IDL.Null,
+    'delivered' : IDL.Null,
+  });
+  const PickupSlotEnum = IDL.Variant({
+    'morning' : IDL.Null,
+    'midMorning' : IDL.Null,
+  });
+  const SubscriptionTypeEnum = IDL.Variant({
+    'none' : IDL.Null,
+    'daily' : IDL.Null,
+    'weekly' : IDL.Null,
+  });
+  const DabbaBooking = IDL.Record({
+    'id' : IDL.Text,
+    'status' : DabbaStatusEnum,
+    'pickupAddress' : IDL.Text,
+    'slotTime' : PickupSlotEnum,
+    'customerId' : IDL.Principal,
+    'frequency' : SubscriptionTypeEnum,
+    'dropAddress' : IDL.Text,
+    'deliveryPartnerId' : IDL.Opt(IDL.Principal),
+  });
   const OtpCode = IDL.Text;
   
   return IDL.Service({
@@ -260,6 +314,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text],
         [],
       ),
+    'getAssignedBookings' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(IDL.Text)],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
@@ -289,6 +348,7 @@ export const idlFactory = ({ IDL }) => {
         [TransformationOutput],
         ['query'],
       ),
+    'updateBooking' : IDL.Func([DabbaBooking], [], []),
     'verifyEmailOtp' : IDL.Func([Email, OtpCode], [OtpStatus], []),
     'verifyPhoneOtp' : IDL.Func([PhoneNumber, OtpCode], [OtpStatus], []),
   });

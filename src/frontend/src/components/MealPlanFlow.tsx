@@ -1,31 +1,41 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Calendar, Clock, UtensilsCrossed } from 'lucide-react';
-import { useGetMeals, usePlaceOrder } from '../hooks/useQueries';
-import { SubscriptionTypeEnum } from '../types/local';
-import type { Meal } from '../types/local';
-import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Calendar, Clock, UtensilsCrossed } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useGetMeals, usePlaceOrder } from "../hooks/useQueries";
+import { SubscriptionTypeEnum } from "../types/local";
+import type { Meal } from "../types/local";
 
 interface MealPlanFlowProps {
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps) {
+export default function MealPlanFlow({
+  onComplete,
+  onCancel,
+}: MealPlanFlowProps) {
   const { data: meals = [], isLoading } = useGetMeals();
   const placeOrder = usePlaceOrder();
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-  const [subscriptionType, setSubscriptionType] = useState<SubscriptionTypeEnum>(SubscriptionTypeEnum.none);
-  const [quantity, setQuantity] = useState('1');
+  const [subscriptionType, setSubscriptionType] =
+    useState<SubscriptionTypeEnum>(SubscriptionTypeEnum.none);
+  const [quantity, setQuantity] = useState("1");
 
   const handleOrder = async () => {
     if (!selectedMeal) {
-      toast.error('Please select a meal');
+      toast.error("Please select a meal");
       return;
     }
 
@@ -36,10 +46,10 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
         subscriptionType,
         scheduledDate: null,
       });
-      toast.success('Order placed successfully!');
+      toast.success("Order placed successfully!");
       onComplete();
-    } catch (error) {
-      toast.error('Failed to place order');
+    } catch (_error) {
+      toast.error("Failed to place order");
     }
   };
 
@@ -47,7 +57,7 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto mb-4"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto mb-4" />
           <p className="text-muted-foreground">Loading meals...</p>
         </div>
       </div>
@@ -61,7 +71,9 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
           <CardContent className="text-center py-12">
             <UtensilsCrossed className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No meals available</h3>
-            <p className="text-muted-foreground mb-4">Check back later for delicious home-cooked meals</p>
+            <p className="text-muted-foreground mb-4">
+              Check back later for delicious home-cooked meals
+            </p>
             <Button onClick={onCancel}>Go Back</Button>
           </CardContent>
         </Card>
@@ -74,7 +86,9 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
       <Card>
         <CardHeader>
           <CardTitle>Browse Meals</CardTitle>
-          <CardDescription>Select a meal and choose your subscription plan</CardDescription>
+          <CardDescription>
+            Select a meal and choose your subscription plan
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
@@ -82,7 +96,9 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
               <Card
                 key={meal.id}
                 className={`cursor-pointer transition-colors ${
-                  selectedMeal?.id === meal.id ? 'border-fresh-600 bg-fresh-50/50' : ''
+                  selectedMeal?.id === meal.id
+                    ? "border-fresh-600 bg-fresh-50/50"
+                    : ""
                 }`}
                 onClick={() => setSelectedMeal(meal)}
               >
@@ -92,9 +108,11 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">₹{meal.price.toString()}</span>
-                    <Badge variant={meal.available ? 'default' : 'secondary'}>
-                      {meal.available ? 'Available' : 'Unavailable'}
+                    <span className="text-2xl font-bold">
+                      ₹{meal.price.toString()}
+                    </span>
+                    <Badge variant={meal.available ? "default" : "secondary"}>
+                      {meal.available ? "Available" : "Unavailable"}
                     </Badge>
                   </div>
                 </CardContent>
@@ -123,27 +141,50 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
                 </Label>
                 <RadioGroup
                   value={subscriptionType}
-                  onValueChange={(value) => setSubscriptionType(value as SubscriptionTypeEnum)}
+                  onValueChange={(value) =>
+                    setSubscriptionType(value as SubscriptionTypeEnum)
+                  }
                 >
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
-                    <RadioGroupItem value={SubscriptionTypeEnum.none} id="none" />
+                    <RadioGroupItem
+                      value={SubscriptionTypeEnum.none}
+                      id="none"
+                    />
                     <Label htmlFor="none" className="flex-1 cursor-pointer">
                       <div className="font-medium">One-time Order</div>
-                      <div className="text-sm text-muted-foreground">Order once</div>
+                      <div className="text-sm text-muted-foreground">
+                        Order once
+                      </div>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
-                    <RadioGroupItem value={SubscriptionTypeEnum.daily} id="sub-daily" />
-                    <Label htmlFor="sub-daily" className="flex-1 cursor-pointer">
+                    <RadioGroupItem
+                      value={SubscriptionTypeEnum.daily}
+                      id="sub-daily"
+                    />
+                    <Label
+                      htmlFor="sub-daily"
+                      className="flex-1 cursor-pointer"
+                    >
                       <div className="font-medium">Daily Subscription</div>
-                      <div className="text-sm text-muted-foreground">Monday to Friday</div>
+                      <div className="text-sm text-muted-foreground">
+                        Monday to Friday
+                      </div>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
-                    <RadioGroupItem value={SubscriptionTypeEnum.weekly} id="sub-weekly" />
-                    <Label htmlFor="sub-weekly" className="flex-1 cursor-pointer">
+                    <RadioGroupItem
+                      value={SubscriptionTypeEnum.weekly}
+                      id="sub-weekly"
+                    />
+                    <Label
+                      htmlFor="sub-weekly"
+                      className="flex-1 cursor-pointer"
+                    >
                       <div className="font-medium">Weekly Subscription</div>
-                      <div className="text-sm text-muted-foreground">Once a week</div>
+                      <div className="text-sm text-muted-foreground">
+                        Once a week
+                      </div>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -152,8 +193,12 @@ export default function MealPlanFlow({ onComplete, onCancel }: MealPlanFlowProps
           )}
 
           <div className="flex gap-3">
-            <Button onClick={handleOrder} disabled={!selectedMeal || placeOrder.isPending} className="flex-1">
-              {placeOrder.isPending ? 'Placing Order...' : 'Place Order'}
+            <Button
+              onClick={handleOrder}
+              disabled={!selectedMeal || placeOrder.isPending}
+              className="flex-1"
+            >
+              {placeOrder.isPending ? "Placing Order..." : "Place Order"}
             </Button>
             <Button variant="outline" onClick={onCancel}>
               Cancel

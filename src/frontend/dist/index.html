@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes' />
+        <meta name='theme-color' content='#10b981' />
+        <meta name='description' content='Fresh - Home Cooked Meal Delivery Ecosystem with near-instant PWA performance' />
+        
+        <!-- PWA Meta Tags -->
+        <meta name='apple-mobile-web-app-capable' content='yes' />
+        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
+        <meta name='apple-mobile-web-app-title' content='Fresh' />
+        <meta name='mobile-web-app-capable' content='yes' />
+        
+        <!-- DNS Prefetch & Preconnect for performance -->
+        <link rel='dns-prefetch' href='https://fonts.googleapis.com' />
+        <link rel='dns-prefetch' href='https://fonts.gstatic.com' />
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+        
+        <!-- Preload critical assets for instant startup -->
+        <link rel='preload' href='/assets/generated/fresh-logo.dim_200x200.png' as='image' type='image/png' />
+        <link rel='preload' href='/manifest.json' as='fetch' crossorigin />
+        
+        <!-- Favicon -->
+        <link rel='icon' type='image/png' sizes='32x32' href='/assets/generated/fresh-logo.dim_200x200.png' />
+        <link rel='shortcut icon' href='/assets/generated/fresh-logo.dim_200x200.png' />
+        
+        <!-- Apple Touch Icons - optimized sizes -->
+        <link rel='apple-touch-icon' sizes='192x192' href='/assets/generated/customer-app-icon-transparent.dim_192x192.png' />
+        <link rel='apple-touch-icon' sizes='512x512' href='/assets/generated/customer-app-icon-transparent.dim_512x512.png' />
+        
+        <!-- Manifest -->
+        <link rel='manifest' href='/manifest.json' id='manifest-link' />
+        
+        <title>Fresh - Home Cooked Meal Delivery Ecosystem</title>
+        
+        <!-- Inline critical CSS for instant first paint -->
+        <style>
+          /* Critical CSS - inline for instant rendering */
+          *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:currentColor}
+          html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+          body{margin:0;line-height:inherit}
+          #root{min-height:100vh}
+          .loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#ecfdf5 0%,#ffffff 50%,#d1fae5 100%)}
+          .loading-spinner{width:4rem;height:4rem;border:4px solid #10b981;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+          @keyframes spin{to{transform:rotate(360deg)}}
+        </style>
+        
+        <!-- Performance monitoring - inline for immediate execution -->
+        <script>
+          // Initialize performance tracking
+          window.performanceMetrics = {
+            startTime: performance.now(),
+            marks: {},
+            measures: {},
+            vitals: {}
+          };
+          
+          performance.mark('page-start');
+          
+          // Core Web Vitals tracking
+          function logWebVital(name, value, rating) {
+            const metric = { name, value, rating: rating || 'unknown' };
+            console.log(`[Performance] ${name}:`, value.toFixed(2), rating ? `(${rating})` : '');
+            if (window.performanceMetrics) {
+              window.performanceMetrics.vitals[name] = metric;
+            }
+          }
+          
+          // Rating thresholds
+          const thresholds = {
+            LCP: { good: 2500, poor: 4000 },
+            FID: { good: 100, poor: 300 },
+            CLS: { good: 0.1, poor: 0.25 },
+            FCP: { good: 1800, poor: 3000 },
+            TTFB: { good: 800, poor: 1800 }
+          };
+          
+          function getRating(name, value) {
+            const t = thresholds[name];
+            if (!t) return 'unknown';
+            return value <= t.good ? 'good' : value <= t.poor ? 'needs-improvement' : 'poor';
+          }
+          
+          if ('PerformanceObserver' in window) {
+            // Largest Contentful Paint (LCP)
+            try {
+              new PerformanceObserver((list) => {
+                const entries = list.getEntries();
+                const lastEntry = entries[entries.length - 1];
+                const value = lastEntry.renderTime || lastEntry.loadTime;
+                logWebVital('LCP', value, getRating('LCP', value));
+              }).observe({ entryTypes: ['largest-contentful-paint'] });
+            } catch (e) {}
+            
+            // First Input Delay (FID)
+            try {
+              new PerformanceObserver((list) => {
+                list.getEntries().forEach((entry) => {
+                  const value = entry.processingStart - entry.startTime;
+                  logWebVital('FID', value, getRating('FID', value));
+                });
+              }).observe({ entryTypes: ['first-input'] });
+            } catch (e) {}
+            
+            // Cumulative Layout Shift (CLS)
+            try {
+              let clsValue = 0;
+              new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                  if (!entry.hadRecentInput) {
+                    clsValue += entry.value;
+                    logWebVital('CLS', clsValue, getRating('CLS', clsValue));
+                  }
+                }
+              }).observe({ entryTypes: ['layout-shift'] });
+            } catch (e) {}
+            
+            // First Contentful Paint (FCP)
+            try {
+              new PerformanceObserver((list) => {
+                list.getEntries().forEach((entry) => {
+                  if (entry.name === 'first-contentful-paint') {
+                    logWebVital('FCP', entry.startTime, getRating('FCP', entry.startTime));
+                  }
+                });
+              }).observe({ entryTypes: ['paint'] });
+            } catch (e) {}
+          }
+          
+          // Navigation timing
+          window.addEventListener('load', () => {
+            performance.mark('page-loaded');
+            const loadTime = performance.now() - window.performanceMetrics.startTime;
+            logWebVital('Page Load', loadTime);
+            
+            // TTFB
+            if (performance.timing) {
+              const ttfb = performance.timing.responseStart - performance.timing.requestStart;
+              logWebVital('TTFB', ttfb, getRating('TTFB', ttfb));
+            }
+            
+            // Resource timing summary
+            setTimeout(() => {
+              if (performance.getEntriesByType) {
+                const resources = performance.getEntriesByType('resource');
+                const totalSize = resources.reduce((acc, r) => acc + (r.transferSize || 0), 0);
+                const cached = resources.filter(r => r.transferSize === 0).length;
+                console.log(`[Performance] Resources: ${resources.length} total, ${cached} cached, ${(totalSize/1024).toFixed(2)}KB transferred`);
+              }
+            }, 1000);
+          });
+          
+          // DOM ready
+          document.addEventListener('DOMContentLoaded', () => {
+            performance.mark('dom-ready');
+            const domTime = performance.now() - window.performanceMetrics.startTime;
+            logWebVital('DOM Ready', domTime);
+          });
+        </script>
+      <script type="module" crossorigin src="/assets/index-CJ4HkvNi.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-DEmIMogl.css">
+    </head>
+    <body>
+        <div id='root'>
+            <!-- Loading placeholder for instant feedback -->
+            <div class='loading-screen'>
+                <div class='loading-spinner'></div>
+            </div>
+        </div>
+        
+        <!-- Main app script - deferred for optimal loading -->
+    </body>
+</html>

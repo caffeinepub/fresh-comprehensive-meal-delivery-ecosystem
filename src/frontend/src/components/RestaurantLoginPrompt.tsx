@@ -1,53 +1,83 @@
-import { useState, useEffect } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useOtpAuth } from '../hooks/useOtpAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { LogIn, UtensilsCrossed, ImagePlus, TrendingUp, Mail, Phone, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertCircle,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  LogIn,
+  Mail,
+  Phone,
+  Shield,
+  TrendingUp,
+  UtensilsCrossed,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useOtpAuth } from "../hooks/useOtpAuth";
 
 export default function RestaurantLoginPrompt() {
   const { login, loginStatus } = useInternetIdentity();
-  const { sendOtp, verifyOtp, resendOtp, clearSession, status, error, session, canResend } = useOtpAuth();
-  
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [activeTab, setActiveTab] = useState('identity');
+  const {
+    sendOtp,
+    verifyOtp,
+    resendOtp,
+    clearSession,
+    status,
+    error,
+    session,
+    canResend,
+  } = useOtpAuth();
 
-  const isLoggingIn = loginStatus === 'logging-in';
-  const isSending = status === 'sending';
-  const isVerifying = status === 'verifying';
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [activeTab, setActiveTab] = useState("identity");
 
+  const isLoggingIn = loginStatus === "logging-in";
+  const isSending = status === "sending";
+  const isVerifying = status === "verifying";
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
-    setOtp('');
+    setOtp("");
   }, [activeTab]);
 
   // Validate Indian phone number format
   const isValidIndianPhone = (phoneNumber: string): boolean => {
-    const cleaned = phoneNumber.replace(/\s/g, '');
-    return cleaned.startsWith('+91') && cleaned.length >= 13;
+    const cleaned = phoneNumber.replace(/\s/g, "");
+    return cleaned.startsWith("+91") && cleaned.length >= 13;
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Please enter your email address');
+      toast.error("Please enter your email address");
       return;
     }
 
     try {
-      await sendOtp('email', email);
-      toast.success('Verification code sent! Check your email.', {
-        description: 'The code will expire in 5 minutes.',
+      await sendOtp("email", email);
+      toast.success("Verification code sent! Check your email.", {
+        description: "The code will expire in 5 minutes.",
       });
     } catch (error) {
-      toast.error('Failed to send verification code', {
-        description: error instanceof Error ? error.message : 'Please check your email and try again.',
+      toast.error("Failed to send verification code", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your email and try again.",
       });
     }
   };
@@ -55,26 +85,30 @@ export default function RestaurantLoginPrompt() {
   const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
-      toast.error('Please enter your phone number');
+      toast.error("Please enter your phone number");
       return;
     }
 
     // Frontend validation for Indian phone numbers
     if (!isValidIndianPhone(phone)) {
-      toast.error('Invalid phone number', {
-        description: 'Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.',
+      toast.error("Invalid phone number", {
+        description:
+          "Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.",
       });
       return;
     }
 
     try {
-      await sendOtp('phone', phone);
-      toast.success('Verification code sent! Check your phone.', {
-        description: 'The code will expire in 5 minutes.',
+      await sendOtp("phone", phone);
+      toast.success("Verification code sent! Check your phone.", {
+        description: "The code will expire in 5 minutes.",
       });
     } catch (error) {
-      toast.error('Failed to send verification code', {
-        description: error instanceof Error ? error.message : 'Please check your phone number and try again.',
+      toast.error("Failed to send verification code", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your phone number and try again.",
       });
     }
   };
@@ -82,54 +116,55 @@ export default function RestaurantLoginPrompt() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp || otp.length !== 6) {
-      toast.error('Please enter a valid 6-digit code');
+      toast.error("Please enter a valid 6-digit code");
       return;
     }
 
     try {
       const isValid = await verifyOtp(otp);
       if (isValid) {
-        toast.success('Login successful!', {
-          description: 'Welcome to Fresh Restaurant. Redirecting...',
+        toast.success("Login successful!", {
+          description: "Welcome to Fresh Restaurant. Redirecting...",
         });
       } else {
-        toast.error('Invalid verification code', {
-          description: 'Please check the code and try again.',
+        toast.error("Invalid verification code", {
+          description: "Please check the code and try again.",
         });
       }
-    } catch (error) {
-      toast.error('Verification failed', {
-        description: 'Network error. Please try again.',
+    } catch (_error) {
+      toast.error("Verification failed", {
+        description: "Network error. Please try again.",
       });
     }
   };
 
   const handleResendOtp = async () => {
     if (!canResend) {
-      toast.error('Please wait before resending', {
-        description: 'You can resend the code after 30 seconds.',
+      toast.error("Please wait before resending", {
+        description: "You can resend the code after 30 seconds.",
       });
       return;
     }
 
     try {
       await resendOtp();
-      toast.success('New verification code sent!', {
-        description: 'Check your ' + (session?.method === 'email' ? 'email' : 'phone') + ' for the new code.',
+      toast.success("New verification code sent!", {
+        description: `Check your ${session?.method === "email" ? "email" : "phone"} for the new code.`,
       });
-      setOtp('');
+      setOtp("");
     } catch (error) {
-      toast.error('Failed to resend code', {
-        description: error instanceof Error ? error.message : 'Please try again.',
+      toast.error("Failed to resend code", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
 
   const handleBackToInput = () => {
     clearSession();
-    setOtp('');
-    setEmail('');
-    setPhone('');
+    setOtp("");
+    setEmail("");
+    setPhone("");
   };
 
   return (
@@ -139,13 +174,14 @@ export default function RestaurantLoginPrompt() {
           <div className="space-y-6">
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Fresh{' '}
+                Fresh{" "}
                 <span className="bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
                   Restaurant
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground">
-                Manage your menu, handle orders, and grow your home-cooking business.
+                Manage your menu, handle orders, and grow your home-cooking
+                business.
               </p>
             </div>
 
@@ -155,7 +191,8 @@ export default function RestaurantLoginPrompt() {
                 <div>
                   <h3 className="font-semibold text-lg">Menu Management</h3>
                   <p className="text-sm text-muted-foreground">
-                    Create and edit your meal offerings with descriptions and pricing
+                    Create and edit your meal offerings with descriptions and
+                    pricing
                   </p>
                 </div>
               </div>
@@ -182,7 +219,9 @@ export default function RestaurantLoginPrompt() {
             <Card className="border-orange-200 dark:border-orange-800 shadow-lg">
               <CardHeader>
                 <CardTitle>Restaurant Partner Login</CardTitle>
-                <CardDescription>Choose your preferred login method</CardDescription>
+                <CardDescription>
+                  Choose your preferred login method
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {error && (
@@ -192,7 +231,7 @@ export default function RestaurantLoginPrompt() {
                   </Alert>
                 )}
 
-                {status === 'success' && session?.verified && (
+                {status === "success" && session?.verified && (
                   <Alert className="mb-4 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
                     <CheckCircle2 className="h-4 w-4 text-orange-600" />
                     <AlertDescription className="text-orange-900 dark:text-orange-100">
@@ -201,7 +240,11 @@ export default function RestaurantLoginPrompt() {
                   </Alert>
                 )}
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="identity">
                       <Shield className="h-4 w-4 mr-2" />
@@ -216,12 +259,17 @@ export default function RestaurantLoginPrompt() {
                       Phone
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="identity" className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       Secure login with Internet Identity - no passwords needed
                     </p>
-                    <Button onClick={login} disabled={isLoggingIn} size="lg" className="w-full gap-2 bg-orange-600 hover:bg-orange-700">
+                    <Button
+                      onClick={login}
+                      disabled={isLoggingIn}
+                      size="lg"
+                      className="w-full gap-2 bg-orange-600 hover:bg-orange-700"
+                    >
                       {isLoggingIn ? (
                         <>
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -235,9 +283,9 @@ export default function RestaurantLoginPrompt() {
                       )}
                     </Button>
                   </TabsContent>
-                  
+
                   <TabsContent value="email" className="space-y-4">
-                    {!session || session.method !== 'email' ? (
+                    {!session || session.method !== "email" ? (
                       <form onSubmit={handleEmailLogin} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email Address</Label>
@@ -251,14 +299,19 @@ export default function RestaurantLoginPrompt() {
                             disabled={isSending}
                           />
                         </div>
-                        <Button type="submit" disabled={isSending} size="lg" className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Button
+                          type="submit"
+                          disabled={isSending}
+                          size="lg"
+                          className="w-full bg-orange-600 hover:bg-orange-700"
+                        >
                           {isSending ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Sending...
                             </>
                           ) : (
-                            'Send Verification Code'
+                            "Send Verification Code"
                           )}
                         </Button>
                       </form>
@@ -271,7 +324,11 @@ export default function RestaurantLoginPrompt() {
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) =>
+                              setOtp(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
+                            }
                             maxLength={6}
                             required
                             disabled={isVerifying}
@@ -282,14 +339,19 @@ export default function RestaurantLoginPrompt() {
                             Code sent to {session.identifier}
                           </p>
                         </div>
-                        <Button type="submit" disabled={isVerifying || otp.length !== 6} size="lg" className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Button
+                          type="submit"
+                          disabled={isVerifying || otp.length !== 6}
+                          size="lg"
+                          className="w-full bg-orange-600 hover:bg-orange-700"
+                        >
                           {isVerifying ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Verifying...
                             </>
                           ) : (
-                            'Verify & Login'
+                            "Verify & Login"
                           )}
                         </Button>
                         <div className="flex gap-2">
@@ -301,7 +363,7 @@ export default function RestaurantLoginPrompt() {
                             onClick={handleResendOtp}
                             disabled={!canResend || isSending}
                           >
-                            {isSending ? 'Sending...' : 'Resend Code'}
+                            {isSending ? "Sending..." : "Resend Code"}
                           </Button>
                           <Button
                             type="button"
@@ -316,9 +378,9 @@ export default function RestaurantLoginPrompt() {
                       </form>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="phone" className="space-y-4">
-                    {!session || session.method !== 'phone' ? (
+                    {!session || session.method !== "phone" ? (
                       <form onSubmit={handlePhoneLogin} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="phone">Indian Phone Number</Label>
@@ -335,14 +397,19 @@ export default function RestaurantLoginPrompt() {
                             Only Indian phone numbers (+91) are supported
                           </p>
                         </div>
-                        <Button type="submit" disabled={isSending} size="lg" className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Button
+                          type="submit"
+                          disabled={isSending}
+                          size="lg"
+                          className="w-full bg-orange-600 hover:bg-orange-700"
+                        >
                           {isSending ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Sending...
                             </>
                           ) : (
-                            'Send Verification Code'
+                            "Send Verification Code"
                           )}
                         </Button>
                       </form>
@@ -355,7 +422,11 @@ export default function RestaurantLoginPrompt() {
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) =>
+                              setOtp(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
+                            }
                             maxLength={6}
                             required
                             disabled={isVerifying}
@@ -366,14 +437,19 @@ export default function RestaurantLoginPrompt() {
                             Code sent to {session.identifier}
                           </p>
                         </div>
-                        <Button type="submit" disabled={isVerifying || otp.length !== 6} size="lg" className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Button
+                          type="submit"
+                          disabled={isVerifying || otp.length !== 6}
+                          size="lg"
+                          className="w-full bg-orange-600 hover:bg-orange-700"
+                        >
                           {isVerifying ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Verifying...
                             </>
                           ) : (
-                            'Verify & Login'
+                            "Verify & Login"
                           )}
                         </Button>
                         <div className="flex gap-2">
@@ -385,7 +461,7 @@ export default function RestaurantLoginPrompt() {
                             onClick={handleResendOtp}
                             disabled={!canResend || isSending}
                           >
-                            {isSending ? 'Sending...' : 'Resend Code'}
+                            {isSending ? "Sending..." : "Resend Code"}
                           </Button>
                           <Button
                             type="button"

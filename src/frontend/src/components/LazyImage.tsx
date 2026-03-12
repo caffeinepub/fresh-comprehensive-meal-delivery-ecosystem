@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
 interface LazyImageProps {
   src: string;
@@ -21,8 +21,8 @@ export default function LazyImage({
   onLoad,
   onError,
   threshold = 0.1,
-  fallbackSrc = '/assets/generated/fresh-logo.dim_200x200.png',
-  priority = false
+  fallbackSrc = "/assets/generated/fresh-logo.dim_200x200.png",
+  priority = false,
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
@@ -39,17 +39,17 @@ export default function LazyImage({
     // Use Intersection Observer for lazy loading
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
+        for (const entry of entries) {
           if (entry.isIntersecting) {
             setIsInView(true);
             observer.disconnect();
           }
-        });
+        }
       },
       {
         threshold,
-        rootMargin: '100px' // Start loading 100px before image enters viewport
-      }
+        rootMargin: "100px", // Start loading 100px before image enters viewport
+      },
     );
 
     observer.observe(imgRef.current);
@@ -70,14 +70,14 @@ export default function LazyImage({
   };
 
   return (
-    <div ref={imgRef} className={cn('relative overflow-hidden', className)}>
+    <div ref={imgRef} className={cn("relative overflow-hidden", className)}>
       {/* Placeholder with shimmer effect */}
       {!isLoaded && (
         <div
           className={cn(
-            'absolute inset-0 bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30',
-            'animate-shimmer bg-[length:200%_100%]',
-            placeholderClassName
+            "absolute inset-0 bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30",
+            "animate-shimmer bg-[length:200%_100%]",
+            placeholderClassName,
           )}
         />
       )}
@@ -88,15 +88,15 @@ export default function LazyImage({
           src={hasError ? fallbackSrc : src}
           alt={alt}
           className={cn(
-            'transition-opacity duration-500 ease-out',
-            isLoaded ? 'opacity-100' : 'opacity-0',
-            className
+            "transition-opacity duration-500 ease-out",
+            isLoaded ? "opacity-100" : "opacity-0",
+            className,
           )}
           onLoad={handleLoad}
           onError={handleError}
-          loading={priority ? 'eager' : 'lazy'}
+          loading={priority ? "eager" : "lazy"}
           decoding="async"
-          fetchPriority={priority ? 'high' : 'auto'}
+          fetchPriority={priority ? "high" : "auto"}
         />
       )}
     </div>

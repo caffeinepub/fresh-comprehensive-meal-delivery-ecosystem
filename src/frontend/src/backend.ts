@@ -154,6 +154,16 @@ export interface ShoppingItem {
     priceInCents: bigint;
     productDescription: string;
 }
+export interface DabbaBooking {
+    id: string;
+    status: DabbaStatusEnum;
+    pickupAddress: string;
+    slotTime: PickupSlotEnum;
+    customerId: Principal;
+    frequency: SubscriptionTypeEnum;
+    dropAddress: string;
+    deliveryPartnerId?: Principal;
+}
 export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
@@ -187,6 +197,22 @@ export interface UserProfile {
     userType: string;
     name: string;
 }
+export enum DabbaStatusEnum {
+    cancelled = "cancelled",
+    pending = "pending",
+    inTransit = "inTransit",
+    pickedUp = "pickedUp",
+    delivered = "delivered"
+}
+export enum PickupSlotEnum {
+    morning = "morning",
+    midMorning = "midMorning"
+}
+export enum SubscriptionTypeEnum {
+    none = "none",
+    daily = "daily",
+    weekly = "weekly"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -201,6 +227,7 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
+    getAssignedBookings(deliveryPartnerId: string): Promise<Array<string>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
@@ -218,10 +245,11 @@ export interface backendInterface {
     setTwilioConfiguration(config: TwilioConfiguration): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     twilioTransform(input: TransformationInput): Promise<TransformationOutput>;
+    updateBooking(booking: DabbaBooking): Promise<void>;
     verifyEmailOtp(email: Email, otp: OtpCode): Promise<OtpStatus>;
     verifyPhoneOtp(phone: PhoneNumber, otp: OtpCode): Promise<OtpStatus>;
 }
-import type { OtpStatus as _OtpStatus, StripeSessionStatus as _StripeSessionStatus, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { DabbaBooking as _DabbaBooking, DabbaStatusEnum as _DabbaStatusEnum, OtpStatus as _OtpStatus, PickupSlotEnum as _PickupSlotEnum, StripeSessionStatus as _StripeSessionStatus, SubscriptionTypeEnum as _SubscriptionTypeEnum, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -333,6 +361,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.createCheckoutSession(arg0, arg1, arg2);
+            return result;
+        }
+    }
+    async getAssignedBookings(arg0: string): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAssignedBookings(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAssignedBookings(arg0);
             return result;
         }
     }
@@ -574,6 +616,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async updateBooking(arg0: DabbaBooking): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateBooking(to_candid_DabbaBooking_n19(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateBooking(to_candid_DabbaBooking_n19(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
     async verifyEmailOtp(arg0: Email, arg1: OtpCode): Promise<OtpStatus> {
         if (this.processError) {
             try {
@@ -780,6 +836,18 @@ function from_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Ui
         smsFailed: value.smsFailed
     } : value;
 }
+function to_candid_DabbaBooking_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DabbaBooking): _DabbaBooking {
+    return to_candid_record_n20(_uploadFile, _downloadFile, value);
+}
+function to_candid_DabbaStatusEnum_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DabbaStatusEnum): _DabbaStatusEnum {
+    return to_candid_variant_n22(_uploadFile, _downloadFile, value);
+}
+function to_candid_PickupSlotEnum_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PickupSlotEnum): _PickupSlotEnum {
+    return to_candid_variant_n24(_uploadFile, _downloadFile, value);
+}
+function to_candid_SubscriptionTypeEnum_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubscriptionTypeEnum): _SubscriptionTypeEnum {
+    return to_candid_variant_n26(_uploadFile, _downloadFile, value);
+}
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
 }
@@ -789,6 +857,36 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
+function to_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    status: DabbaStatusEnum;
+    pickupAddress: string;
+    slotTime: PickupSlotEnum;
+    customerId: Principal;
+    frequency: SubscriptionTypeEnum;
+    dropAddress: string;
+    deliveryPartnerId?: Principal;
+}): {
+    id: string;
+    status: _DabbaStatusEnum;
+    pickupAddress: string;
+    slotTime: _PickupSlotEnum;
+    customerId: Principal;
+    frequency: _SubscriptionTypeEnum;
+    dropAddress: string;
+    deliveryPartnerId: [] | [Principal];
+} {
+    return {
+        id: value.id,
+        status: to_candid_DabbaStatusEnum_n21(_uploadFile, _downloadFile, value.status),
+        pickupAddress: value.pickupAddress,
+        slotTime: to_candid_PickupSlotEnum_n23(_uploadFile, _downloadFile, value.slotTime),
+        customerId: value.customerId,
+        frequency: to_candid_SubscriptionTypeEnum_n25(_uploadFile, _downloadFile, value.frequency),
+        dropAddress: value.dropAddress,
+        deliveryPartnerId: value.deliveryPartnerId ? candid_some(value.deliveryPartnerId) : candid_none()
+    };
+}
 function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     proposed_top_up_amount?: bigint;
 }): {
@@ -797,6 +895,55 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     return {
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
+}
+function to_candid_variant_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: DabbaStatusEnum): {
+    cancelled: null;
+} | {
+    pending: null;
+} | {
+    inTransit: null;
+} | {
+    pickedUp: null;
+} | {
+    delivered: null;
+} {
+    return value == DabbaStatusEnum.cancelled ? {
+        cancelled: null
+    } : value == DabbaStatusEnum.pending ? {
+        pending: null
+    } : value == DabbaStatusEnum.inTransit ? {
+        inTransit: null
+    } : value == DabbaStatusEnum.pickedUp ? {
+        pickedUp: null
+    } : value == DabbaStatusEnum.delivered ? {
+        delivered: null
+    } : value;
+}
+function to_candid_variant_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PickupSlotEnum): {
+    morning: null;
+} | {
+    midMorning: null;
+} {
+    return value == PickupSlotEnum.morning ? {
+        morning: null
+    } : value == PickupSlotEnum.midMorning ? {
+        midMorning: null
+    } : value;
+}
+function to_candid_variant_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubscriptionTypeEnum): {
+    none: null;
+} | {
+    daily: null;
+} | {
+    weekly: null;
+} {
+    return value == SubscriptionTypeEnum.none ? {
+        none: null
+    } : value == SubscriptionTypeEnum.daily ? {
+        daily: null
+    } : value == SubscriptionTypeEnum.weekly ? {
+        weekly: null
+    } : value;
 }
 function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;

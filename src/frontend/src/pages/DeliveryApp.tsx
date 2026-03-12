@@ -1,323 +1,374 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Package, Truck, DollarSign, MapPin } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  useGetDeliveryProfile,
-  useUpdateDeliveryAvailability,
-  useGetAssignedOrders,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Clock, Loader2, MapPin, Package } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
   useGetAssignedDabbaBookings,
-  useUpdateDeliveryStatus,
+  useGetAssignedOrders,
+  useGetDeliveryProfile,
   useUpdateDabbaStatus,
-} from '../hooks/useQueries';
-import { DeliveryStatusEnum, DabbaStatusEnum } from '../types/local';
-import { toast } from 'sonner';
-import LazyImage from '../components/LazyImage';
-
-// Loading fallback component
-function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-delivery-600 border-t-transparent mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    </div>
-  );
-}
+  useUpdateDeliveryAvailability,
+  useUpdateDeliveryStatus,
+} from "../hooks/useQueries";
+import {
+  DabbaStatusEnum,
+  DeliveryStatusEnum,
+  PickupSlotEnum,
+} from "../types/local";
 
 export default function DeliveryApp() {
-  const { data: profile } = useGetDeliveryProfile();
-  const { data: orders = [] } = useGetAssignedOrders();
-  const { data: bookings = [] } = useGetAssignedDabbaBookings();
+  const { data: profile, isLoading: profileLoading } = useGetDeliveryProfile();
+  const { data: orders = [], isLoading: ordersLoading } =
+    useGetAssignedOrders();
+  const {
+    data: bookings = [],
+    isLoading: bookingsLoading,
+    refetch: refetchBookings,
+  } = useGetAssignedDabbaBookings();
   const updateAvailability = useUpdateDeliveryAvailability();
   const updateDeliveryStatus = useUpdateDeliveryStatus();
   const updateDabbaStatus = useUpdateDabbaStatus();
 
-  const [isAvailable, setIsAvailable] = useState(profile?.available || false);
-
-  useEffect(() => {
-    if (profile) {
-      setIsAvailable(profile.available);
-    }
-  }, [profile]);
-
-  // Background prefetch for likely interactions
-  useEffect(() => {
-    // Prefetch hero image
-    const img = new Image();
-    img.src = '/assets/generated/delivery-hero.dim_800x600.jpg';
-    
-    const prefetchTimer = setTimeout(() => {
-      console.log('[Prefetch] Delivery app data loaded in background');
-    }, 1000);
-
-    return () => clearTimeout(prefetchTimer);
-  }, []);
+  const [isAvailable, setIsAvailable] = useState(profile?.available ?? true);
 
   const handleAvailabilityToggle = async (checked: boolean) => {
     try {
       await updateAvailability.mutateAsync(checked);
       setIsAvailable(checked);
-      toast.success(checked ? 'You are now available for deliveries' : 'You are now offline');
-    } catch (error) {
-      toast.error('Failed to update availability');
+      toast.success(
+        checked ? "You are now available" : "You are now unavailable",
+      );
+    } catch (_error) {
+      toast.error("Failed to update availability");
     }
   };
 
-  const handleUpdateDeliveryStatus = async (orderId: string, status: DeliveryStatusEnum) => {
+  const handleUpdateOrderStatus = async (
+    orderId: string,
+    status: DeliveryStatusEnum,
+  ) => {
     try {
       await updateDeliveryStatus.mutateAsync({ orderId, status });
-      toast.success('Delivery status updated');
-    } catch (error) {
-      toast.error('Failed to update status');
+      toast.success("Order status updated");
+    } catch (_error) {
+      toast.error("Failed to update order status");
     }
   };
 
-  const handleUpdateDabbaStatus = async (bookingId: string, status: DabbaStatusEnum) => {
+  const handleUpdateBookingStatus = async (
+    bookingId: string,
+    status: DabbaStatusEnum,
+  ) => {
     try {
       await updateDabbaStatus.mutateAsync({ bookingId, status });
-      toast.success('Booking status updated');
-    } catch (error) {
-      toast.error('Failed to update status');
+      toast.success("Booking status updated");
+      // Refetch to get latest data
+      refetchBookings();
+    } catch (_error) {
+      toast.error("Failed to update booking status");
     }
   };
 
-  const activeOrders = orders.filter(
-    (o) => o.deliveryStatus !== DeliveryStatusEnum.delivered && o.deliveryStatus !== DeliveryStatusEnum.cancelled
-  );
-  const activeBookings = bookings.filter(
-    (b) => b.status !== DabbaStatusEnum.delivered && b.status !== DabbaStatusEnum.cancelled
-  );
+  const getSlotTimeText = (slot: PickupSlotEnum) => {
+    return slot === PickupSlotEnum.morning
+      ? "8:00 AM - 10:00 AM"
+      : "10:00 AM - 12:00 PM";
+  };
+
+  const getStatusVariant = (
+    status: string,
+  ): "default" | "secondary" | "destructive" => {
+    if (status === "delivered") return "default";
+    if (status === "cancelled") return "destructive";
+    return "secondary";
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-delivery-600" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <LazyImage
-          src="/assets/generated/delivery-hero.dim_800x600.jpg"
-          alt="Delivery Hero"
-          className="w-full h-48 object-cover rounded-lg mb-6"
-          priority
-        />
-        <h1 className="text-4xl font-bold mb-2">Delivery Dashboard</h1>
-        <p className="text-xl text-muted-foreground">Manage your deliveries and earnings</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-delivery-600" />
-              Availability
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
+    <div className="min-h-screen bg-gradient-to-br from-delivery-50 to-blue-50">
+      <header className="bg-white border-b border-delivery-200 sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Package className="h-8 w-8 text-delivery-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-delivery-900">
+                  Fresh Delivery
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Welcome, {profile?.name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Label htmlFor="availability" className="text-sm font-medium">
+                {isAvailable ? "Available" : "Unavailable"}
+              </Label>
               <Switch
                 id="availability"
                 checked={isAvailable}
                 onCheckedChange={handleAvailabilityToggle}
                 disabled={updateAvailability.isPending}
               />
-              <Label htmlFor="availability" className="cursor-pointer">
-                {isAvailable ? 'Available' : 'Offline'}
-              </Label>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </header>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-delivery-600" />
-              Active Orders
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-delivery-600">{activeOrders.length}</div>
-            <p className="text-sm text-muted-foreground">Meal deliveries</p>
-          </CardContent>
-        </Card>
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Your Deliveries</h2>
+          <p className="text-muted-foreground">
+            Manage your assigned orders and dabba bookings
+          </p>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-delivery-600" />
-              Active Bookings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-delivery-600">{activeBookings.length}</div>
-            <p className="text-sm text-muted-foreground">Dabba pickups</p>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="orders" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="orders">
+              Meal Orders ({orders.length})
+            </TabsTrigger>
+            <TabsTrigger value="bookings">
+              Dabba Bookings ({bookings.length})
+            </TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-delivery-600" />
-              Total Earnings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-delivery-600">
-              ₹{profile?.totalEarnings?.toString() || '0'}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {profile?.deliveryCount?.toString() || '0'} deliveries
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="orders" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="orders">Meal Orders</TabsTrigger>
-          <TabsTrigger value="bookings">Dabba Pickups</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="orders" className="space-y-4">
-          <h2 className="text-2xl font-bold">Assigned Meal Orders</h2>
-          <div className="grid gap-4">
-            {orders.length === 0 ? (
+          <TabsContent value="orders" className="space-y-4">
+            {ordersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-delivery-600" />
+              </div>
+            ) : orders.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No orders assigned yet
+                <CardContent className="py-12 text-center">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No orders assigned yet
+                  </p>
                 </CardContent>
               </Card>
             ) : (
               orders.map((order) => (
                 <Card key={order.id}>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Order #{order.id.slice(0, 8)}</CardTitle>
-                      <Badge>{order.deliveryStatus}</Badge>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>Order #{order.id}</CardTitle>
+                        <CardDescription>
+                          Quantity: {order.quantity.toString()}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={getStatusVariant(order.deliveryStatus)}>
+                        {order.deliveryStatus}
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Quantity:</span>
-                          <span>{order.quantity.toString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total:</span>
-                          <span className="font-semibold">₹{order.totalPrice.toString()}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {order.deliveryStatus === DeliveryStatusEnum.assigned && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDeliveryStatus(order.id, DeliveryStatusEnum.pickedUp)}
-                            disabled={updateDeliveryStatus.isPending}
-                          >
-                            Mark Picked Up
-                          </Button>
-                        )}
-                        {order.deliveryStatus === DeliveryStatusEnum.pickedUp && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDeliveryStatus(order.id, DeliveryStatusEnum.inTransit)}
-                            disabled={updateDeliveryStatus.isPending}
-                          >
-                            In Transit
-                          </Button>
-                        )}
-                        {order.deliveryStatus === DeliveryStatusEnum.inTransit && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDeliveryStatus(order.id, DeliveryStatusEnum.delivered)}
-                            disabled={updateDeliveryStatus.isPending}
-                          >
-                            Mark Delivered
-                          </Button>
-                        )}
-                      </div>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateOrderStatus(
+                            order.id,
+                            DeliveryStatusEnum.pickedUp,
+                          )
+                        }
+                        disabled={
+                          order.deliveryStatus !== DeliveryStatusEnum.assigned
+                        }
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark Picked Up
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateOrderStatus(
+                            order.id,
+                            DeliveryStatusEnum.delivered,
+                          )
+                        }
+                        disabled={
+                          order.deliveryStatus !== DeliveryStatusEnum.pickedUp
+                        }
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark Delivered
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             )}
-          </div>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="bookings" className="space-y-4">
-          <h2 className="text-2xl font-bold">Assigned Dabba Pickups</h2>
-          <div className="grid gap-4">
-            {bookings.length === 0 ? (
+          <TabsContent value="bookings" className="space-y-4">
+            {bookingsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-delivery-600" />
+              </div>
+            ) : bookings.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No bookings assigned yet
+                <CardContent className="py-12 text-center">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No dabba bookings assigned yet
+                  </p>
                 </CardContent>
               </Card>
             ) : (
               bookings.map((booking) => (
                 <Card key={booking.id}>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Booking #{booking.id.slice(0, 8)}</CardTitle>
-                      <Badge>{booking.status}</Badge>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>Dabba Pickup</CardTitle>
+                        <CardDescription>
+                          Booking ID: {booking.id}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={getStatusVariant(booking.status)}>
+                        {booking.status}
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Pickup: </span>
-                          <span>{booking.pickupAddress}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Drop: </span>
-                          <span>{booking.dropAddress}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Slot: </span>
-                          <span className="capitalize">{booking.slotTime}</span>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                        <div className="flex-1">
+                          <div className="text-sm text-muted-foreground">
+                            Pickup
+                          </div>
+                          <div className="font-medium">
+                            {booking.pickupAddress}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {booking.status === DabbaStatusEnum.pending && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDabbaStatus(booking.id, DabbaStatusEnum.pickedUp)}
-                            disabled={updateDabbaStatus.isPending}
-                          >
-                            Mark Picked Up
-                          </Button>
-                        )}
-                        {booking.status === DabbaStatusEnum.pickedUp && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDabbaStatus(booking.id, DabbaStatusEnum.inTransit)}
-                            disabled={updateDabbaStatus.isPending}
-                          >
-                            In Transit
-                          </Button>
-                        )}
-                        {booking.status === DabbaStatusEnum.inTransit && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateDabbaStatus(booking.id, DabbaStatusEnum.delivered)}
-                            disabled={updateDabbaStatus.isPending}
-                          >
-                            Mark Delivered
-                          </Button>
-                        )}
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                        <div className="flex-1">
+                          <div className="text-sm text-muted-foreground">
+                            Drop
+                          </div>
+                          <div className="font-medium">
+                            {booking.dropAddress}
+                          </div>
+                        </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {getSlotTimeText(booking.slotTime)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateBookingStatus(
+                            booking.id,
+                            DabbaStatusEnum.pickedUp,
+                          )
+                        }
+                        disabled={booking.status !== DabbaStatusEnum.pending}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark Picked Up
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateBookingStatus(
+                            booking.id,
+                            DabbaStatusEnum.inTransit,
+                          )
+                        }
+                        disabled={booking.status !== DabbaStatusEnum.pickedUp}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        In Transit
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          handleUpdateBookingStatus(
+                            booking.id,
+                            DabbaStatusEnum.delivered,
+                          )
+                        }
+                        disabled={booking.status !== DabbaStatusEnum.inTransit}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Delivered
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))
             )}
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Earnings Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Earnings</p>
+                <p className="text-2xl font-bold text-delivery-600">
+                  ₹{profile?.totalEarnings?.toString() ?? "0"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Deliveries Completed
+                </p>
+                <p className="text-2xl font-bold text-delivery-600">
+                  {profile?.deliveryCount?.toString() ?? "0"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      <footer className="bg-white border-t border-delivery-200 mt-12">
+        <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+          <p>
+            © {new Date().getFullYear()} Fresh Delivery. Built with ❤️ using{" "}
+            <a
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-delivery-600 hover:underline"
+            >
+              caffeine.ai
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

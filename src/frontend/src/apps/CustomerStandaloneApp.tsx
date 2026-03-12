@@ -1,78 +1,82 @@
-import { useEffect, useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useOtpAuth } from '../hooks/useOtpAuth';
-import { useGetCallerUserProfile, useGetCustomerProfile } from '../hooks/useQueries';
-import { ThemeProvider } from 'next-themes';
-import { Toaster } from '@/components/ui/sonner';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import CustomerLoginPrompt from '../components/CustomerLoginPrompt';
-import CustomerProfileSetup from '../components/CustomerProfileSetup';
-import HomePage from '../pages/HomePage';
-import InstallPrompt from '../components/InstallPrompt';
-import InstallPromptFirst from '../components/InstallPromptFirst';
-import { markPerformance, logAppStartup, logPerformanceSummary } from '../lib/performance';
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
+import { useEffect, useState } from "react";
+import AccessDenied from "../components/AccessDenied";
+import CustomerLoginPrompt from "../components/CustomerLoginPrompt";
+import CustomerProfileSetup from "../components/CustomerProfileSetup";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import InstallPrompt from "../components/InstallPrompt";
+import InstallPromptFirst from "../components/InstallPromptFirst";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useOtpAuth } from "../hooks/useOtpAuth";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
+import {
+  logAppStartup,
+  logPerformanceSummary,
+  markPerformance,
+} from "../lib/performance";
+import HomePage from "../pages/HomePage";
 
 export default function CustomerStandaloneApp() {
   const { identity, isInitializing } = useInternetIdentity();
   const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
-  const { data: customerProfile } = useGetCustomerProfile();
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    isFetched,
+  } = useGetCallerUserProfile();
+
   const [showInstallFirst, setShowInstallFirst] = useState(true);
 
   const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const showProfileSetup =
+    isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const hasCorrectRole = !userProfile || userProfile.userType === "customer";
 
   useEffect(() => {
-    markPerformance('customer-app-mount');
+    markPerformance("customer-app-mount");
 
-    // Register enhanced service worker with aggressive caching
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
+        .register("/sw.js", { scope: "/" })
         .then((registration) => {
-          console.log('[Customer App] Service Worker v3 registered with aggressive caching');
-          
-          // Check for updates periodically
           setInterval(() => {
             registration.update();
-          }, 60000); // Check every minute
-          
-          registration.addEventListener('updatefound', () => {
+          }, 60000);
+          registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;
             if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[Customer App] New service worker available - refresh for updates');
+              newWorker.addEventListener("statechange", () => {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  console.log("[Customer App] New service worker available");
                 }
               });
             }
           });
         })
         .catch((error) => {
-          console.error('[Customer App] Service Worker registration failed:', error);
+          console.error(
+            "[Customer App] Service Worker registration failed:",
+            error,
+          );
         });
     }
 
-    // Update HTML metadata for Customer app
-    document.title = 'Fresh Customer - Home Cooked Meal Delivery';
+    document.title = "Fresh Customer - Home Cooked Meal Delivery";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', '#10b981');
-    }
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#10b981");
 
-    // Log app startup
-    logAppStartup('Customer App');
-
-    // Log performance summary after app stabilizes
+    logAppStartup("Customer App");
     const timer = setTimeout(() => {
       logPerformanceSummary();
     }, 3000);
-
     return () => clearTimeout(timer);
   }, []);
 
-  // Show install prompt first before anything else
   if (showInstallFirst) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -90,8 +94,10 @@ export default function CustomerStandaloneApp() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-fresh-50 via-background to-fresh-100">
           <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto"></div>
-            <p className="text-muted-foreground">Loading Fresh Customer App...</p>
+            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto" />
+            <p className="text-muted-foreground">
+              Loading Fresh Customer App...
+            </p>
           </div>
         </div>
       </ThemeProvider>
@@ -119,6 +125,22 @@ export default function CustomerStandaloneApp() {
           <CustomerProfileSetup />
           <Footer />
         </div>
+        <Toaster />
+      </ThemeProvider>
+    );
+  }
+
+  // Role-based access control: block non-customers
+  if (
+    isAuthenticated &&
+    !profileLoading &&
+    isFetched &&
+    userProfile &&
+    !hasCorrectRole
+  ) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AccessDenied appName="Customer" />
         <Toaster />
       </ThemeProvider>
     );

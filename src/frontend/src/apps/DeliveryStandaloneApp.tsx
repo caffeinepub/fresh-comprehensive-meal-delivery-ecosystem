@@ -1,70 +1,79 @@
-import { useEffect, useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useOtpAuth } from '../hooks/useOtpAuth';
-import { useGetCallerUserProfile, useGetDeliveryProfile } from '../hooks/useQueries';
-import { ThemeProvider } from 'next-themes';
-import { Toaster } from '@/components/ui/sonner';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import DeliveryLoginPrompt from '../components/DeliveryLoginPrompt';
-import DeliveryProfileSetup from '../components/DeliveryProfileSetup';
-import DeliveryApp from '../pages/DeliveryApp';
-import InstallPrompt from '../components/InstallPrompt';
-import InstallPromptFirst from '../components/InstallPromptFirst';
-import { markPerformance, logAppStartup, logPerformanceSummary } from '../lib/performance';
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
+import { useEffect, useState } from "react";
+import AccessDenied from "../components/AccessDenied";
+import DeliveryLoginPrompt from "../components/DeliveryLoginPrompt";
+import DeliveryProfileSetup from "../components/DeliveryProfileSetup";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import InstallPrompt from "../components/InstallPrompt";
+import InstallPromptFirst from "../components/InstallPromptFirst";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useOtpAuth } from "../hooks/useOtpAuth";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
+import {
+  logAppStartup,
+  logPerformanceSummary,
+  markPerformance,
+} from "../lib/performance";
+import DeliveryApp from "../pages/DeliveryApp";
 
 export default function DeliveryStandaloneApp() {
   const { identity, isInitializing } = useInternetIdentity();
   const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
-  const { data: deliveryProfile } = useGetDeliveryProfile();
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    isFetched,
+  } = useGetCallerUserProfile();
+
   const [showInstallFirst, setShowInstallFirst] = useState(true);
 
   const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const showProfileSetup =
+    isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const hasCorrectRole = !userProfile || userProfile.userType === "delivery";
 
   useEffect(() => {
-    markPerformance('delivery-app-mount');
+    markPerformance("delivery-app-mount");
 
-    // Register enhanced service worker with aggressive caching
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
+        .register("/sw.js", { scope: "/" })
         .then((registration) => {
-          console.log('[Delivery App] Service Worker v3 registered with aggressive caching');
-          
           setInterval(() => {
             registration.update();
           }, 60000);
-          
-          registration.addEventListener('updatefound', () => {
+          registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;
             if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[Delivery App] New service worker available - refresh for updates');
+              newWorker.addEventListener("statechange", () => {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  console.log("[Delivery App] New service worker available");
                 }
               });
             }
           });
         })
         .catch((error) => {
-          console.error('[Delivery App] Service Worker registration failed:', error);
+          console.error(
+            "[Delivery App] Service Worker registration failed:",
+            error,
+          );
         });
     }
 
-    document.title = 'Fresh Delivery - Delivery Partner Portal';
+    document.title = "Fresh Delivery - Delivery Partner Portal";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', '#3b82f6');
-    }
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#3b82f6");
 
-    logAppStartup('Delivery App');
-
+    logAppStartup("Delivery App");
     const timer = setTimeout(() => {
       logPerformanceSummary();
     }, 3000);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -85,8 +94,10 @@ export default function DeliveryStandaloneApp() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-delivery-50 via-background to-delivery-100">
           <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-delivery-600 border-t-transparent mx-auto"></div>
-            <p className="text-muted-foreground">Loading Fresh Delivery App...</p>
+            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-delivery-600 border-t-transparent mx-auto" />
+            <p className="text-muted-foreground">
+              Loading Fresh Delivery App...
+            </p>
           </div>
         </div>
       </ThemeProvider>
@@ -114,6 +125,22 @@ export default function DeliveryStandaloneApp() {
           <DeliveryProfileSetup />
           <Footer />
         </div>
+        <Toaster />
+      </ThemeProvider>
+    );
+  }
+
+  // Role-based access control: block non-delivery partners
+  if (
+    isAuthenticated &&
+    !profileLoading &&
+    isFetched &&
+    userProfile &&
+    !hasCorrectRole
+  ) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AccessDenied appName="Delivery Partner" />
         <Toaster />
       </ThemeProvider>
     );

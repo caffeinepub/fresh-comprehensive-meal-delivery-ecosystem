@@ -1,7 +1,7 @@
 // Local type definitions for types not exported by the backend
 // These are used by the frontend but not available in the backend interface
 
-import { Principal } from '@icp-sdk/core/principal';
+import type { Principal } from "@icp-sdk/core/principal";
 
 export interface UserProfile {
   name: string;
@@ -76,39 +76,39 @@ export interface DabbaBooking {
 }
 
 export enum OrderStatusEnum {
-  pending = 'pending',
-  confirmed = 'confirmed',
-  preparing = 'preparing',
-  readyForPickup = 'readyForPickup',
-  inTransit = 'inTransit',
-  delivered = 'delivered',
-  cancelled = 'cancelled',
+  pending = "pending",
+  confirmed = "confirmed",
+  preparing = "preparing",
+  readyForPickup = "readyForPickup",
+  inTransit = "inTransit",
+  delivered = "delivered",
+  cancelled = "cancelled",
 }
 
 export enum DeliveryStatusEnum {
-  pending = 'pending',
-  assigned = 'assigned',
-  pickedUp = 'pickedUp',
-  inTransit = 'inTransit',
-  delivered = 'delivered',
-  cancelled = 'cancelled',
+  pending = "pending",
+  assigned = "assigned",
+  pickedUp = "pickedUp",
+  inTransit = "inTransit",
+  delivered = "delivered",
+  cancelled = "cancelled",
 }
 
 export enum SubscriptionTypeEnum {
-  none = 'none',
-  daily = 'daily',
-  weekly = 'weekly',
+  none = "none",
+  daily = "daily",
+  weekly = "weekly",
 }
 
 export enum PickupSlotEnum {
-  morning = 'morning',
-  midMorning = 'midMorning',
+  morning = "morning",
+  midMorning = "midMorning",
 }
 
 export enum DabbaStatusEnum {
-  pending = 'pending',
-  pickedUp = 'pickedUp',
-  inTransit = 'inTransit',
-  delivered = 'delivered',
-  cancelled = 'cancelled',
+  pending = "pending",
+  pickedUp = "pickedUp",
+  inTransit = "inTransit",
+  delivered = "delivered",
+  cancelled = "cancelled",
 }

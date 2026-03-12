@@ -1,69 +1,78 @@
-import { useEffect, useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useOtpAuth } from '../hooks/useOtpAuth';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
-import { ThemeProvider } from 'next-themes';
-import { Toaster } from '@/components/ui/sonner';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import AdminLoginPrompt from '../components/AdminLoginPrompt';
-import AdminProfileSetup from '../components/AdminProfileSetup';
-import AdminApp from '../pages/AdminApp';
-import InstallPrompt from '../components/InstallPrompt';
-import InstallPromptFirst from '../components/InstallPromptFirst';
-import { markPerformance, logAppStartup, logPerformanceSummary } from '../lib/performance';
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
+import { useEffect, useState } from "react";
+import AccessDenied from "../components/AccessDenied";
+import AdminLoginPrompt from "../components/AdminLoginPrompt";
+import AdminProfileSetup from "../components/AdminProfileSetup";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import InstallPrompt from "../components/InstallPrompt";
+import InstallPromptFirst from "../components/InstallPromptFirst";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useOtpAuth } from "../hooks/useOtpAuth";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
+import {
+  logAppStartup,
+  logPerformanceSummary,
+  markPerformance,
+} from "../lib/performance";
+import AdminApp from "../pages/AdminApp";
 
 export default function AdminStandaloneApp() {
   const { identity, isInitializing } = useInternetIdentity();
   const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    isFetched,
+  } = useGetCallerUserProfile();
   const [showInstallFirst, setShowInstallFirst] = useState(true);
 
   const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const showProfileSetup =
+    isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const hasCorrectRole = !userProfile || userProfile.userType === "admin";
 
   useEffect(() => {
-    markPerformance('admin-app-mount');
+    markPerformance("admin-app-mount");
 
-    // Register enhanced service worker with aggressive caching
-    if ('serviceWorker' in navigator) {
+    if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
+        .register("/sw.js", { scope: "/" })
         .then((registration) => {
-          console.log('[Admin App] Service Worker v3 registered with aggressive caching');
-          
           setInterval(() => {
             registration.update();
           }, 60000);
-          
-          registration.addEventListener('updatefound', () => {
+          registration.addEventListener("updatefound", () => {
             const newWorker = registration.installing;
             if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[Admin App] New service worker available - refresh for updates');
+              newWorker.addEventListener("statechange", () => {
+                if (
+                  newWorker.state === "installed" &&
+                  navigator.serviceWorker.controller
+                ) {
+                  console.log("[Admin App] New service worker available");
                 }
               });
             }
           });
         })
         .catch((error) => {
-          console.error('[Admin App] Service Worker registration failed:', error);
+          console.error(
+            "[Admin App] Service Worker registration failed:",
+            error,
+          );
         });
     }
 
-    document.title = 'Fresh Admin - Platform Administration';
+    document.title = "Fresh Admin - Platform Administration";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', '#64748b');
-    }
+    if (metaThemeColor) metaThemeColor.setAttribute("content", "#64748b");
 
-    logAppStartup('Admin App');
-
+    logAppStartup("Admin App");
     const timer = setTimeout(() => {
       logPerformanceSummary();
     }, 3000);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -84,7 +93,7 @@ export default function AdminStandaloneApp() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-admin-50 via-background to-admin-100">
           <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-admin-600 border-t-transparent mx-auto"></div>
+            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-admin-600 border-t-transparent mx-auto" />
             <p className="text-muted-foreground">Loading Fresh Admin App...</p>
           </div>
         </div>
@@ -113,6 +122,22 @@ export default function AdminStandaloneApp() {
           <AdminProfileSetup />
           <Footer />
         </div>
+        <Toaster />
+      </ThemeProvider>
+    );
+  }
+
+  // Role-based access control: block non-admins
+  if (
+    isAuthenticated &&
+    !profileLoading &&
+    isFetched &&
+    userProfile &&
+    !hasCorrectRole
+  ) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AccessDenied appName="Admin" />
         <Toaster />
       </ThemeProvider>
     );

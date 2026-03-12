@@ -1,26 +1,36 @@
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Download, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 interface InstallPromptProps {
   appName: string;
-  appType: 'customer' | 'delivery' | 'restaurant' | 'admin';
+  appType: "customer" | "delivery" | "restaurant" | "admin";
 }
 
-export default function InstallPrompt({ appName, appType }: InstallPromptProps) {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+export default function InstallPrompt({
+  appName,
+  appType,
+}: InstallPromptProps) {
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
       return;
     }
@@ -38,7 +48,7 @@ export default function InstallPrompt({ appName, appType }: InstallPromptProps) 
       setShowPrompt(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     // Listen for app installed event
     const handleAppInstalled = () => {
@@ -47,11 +57,14 @@ export default function InstallPrompt({ appName, appType }: InstallPromptProps) 
       setDeferredPrompt(null);
     };
 
-    window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, [appType]);
 
@@ -61,23 +74,23 @@ export default function InstallPrompt({ appName, appType }: InstallPromptProps) 
     try {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
+
+      if (outcome === "accepted") {
+        console.log("User accepted the install prompt");
       } else {
-        console.log('User dismissed the install prompt');
+        console.log("User dismissed the install prompt");
       }
-      
+
       setDeferredPrompt(null);
       setShowPrompt(false);
     } catch (error) {
-      console.error('Error showing install prompt:', error);
+      console.error("Error showing install prompt:", error);
     }
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem(`pwa-install-dismissed-${appType}`, 'true');
+    localStorage.setItem(`pwa-install-dismissed-${appType}`, "true");
   };
 
   if (isInstalled || !showPrompt || !deferredPrompt) {
@@ -85,17 +98,17 @@ export default function InstallPrompt({ appName, appType }: InstallPromptProps) 
   }
 
   const colorClasses = {
-    customer: 'border-fresh-200 bg-fresh-50/50',
-    delivery: 'border-blue-200 bg-blue-50/50',
-    restaurant: 'border-orange-200 bg-orange-50/50',
-    admin: 'border-slate-200 bg-slate-50/50',
+    customer: "border-fresh-200 bg-fresh-50/50",
+    delivery: "border-blue-200 bg-blue-50/50",
+    restaurant: "border-orange-200 bg-orange-50/50",
+    admin: "border-slate-200 bg-slate-50/50",
   };
 
   const buttonClasses = {
-    customer: 'bg-fresh-600 hover:bg-fresh-700',
-    delivery: 'bg-blue-600 hover:bg-blue-700',
-    restaurant: 'bg-orange-600 hover:bg-orange-700',
-    admin: 'bg-slate-600 hover:bg-slate-700',
+    customer: "bg-fresh-600 hover:bg-fresh-700",
+    delivery: "bg-blue-600 hover:bg-blue-700",
+    restaurant: "bg-orange-600 hover:bg-orange-700",
+    admin: "bg-slate-600 hover:bg-slate-700",
   };
 
   return (
@@ -117,7 +130,8 @@ export default function InstallPrompt({ appName, appType }: InstallPromptProps) 
             </Button>
           </div>
           <CardDescription>
-            Install this app on your device for quick access and offline functionality
+            Install this app on your device for quick access and offline
+            functionality
           </CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">

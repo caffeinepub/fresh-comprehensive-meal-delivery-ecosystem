@@ -8,10 +8,9 @@ import Storage "blob-storage/Storage";
 import Iter "mo:core/Iter";
 import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
-import Migration "migration";
+
 import MixinStorage "blob-storage/Mixin";
 
-(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -472,5 +471,90 @@ actor {
       Runtime.trap("Unauthorized: Only users can create checkout sessions");
     };
     await Stripe.createCheckoutSession(getStripeConfiguration(), caller, items, successUrl, cancelUrl, transform);
+  };
+
+  // ------------ Dabba-Booking Fixes with Authorization --------------
+  public shared ({ caller }) func updateBooking(booking : DabbaBooking) : async () {
+    // Must be authenticated user
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can update bookings");
+    };
+
+    // Get existing booking to verify ownership
+    switch (dabbaBookings.get(booking.id)) {
+      case (null) {
+        // New booking - caller must be the customer
+        if (caller != booking.customerId) {
+          Runtime.trap("Unauthorized: Can only create bookings for yourself");
+        };
+      };
+      case (?existingBooking) {
+        // Updating existing booking
+        let isAdmin = AccessControl.isAdmin(accessControlState, caller);
+        let isCustomer = caller == existingBooking.customerId;
+        let isAssignedPartner = switch (existingBooking.deliveryPartnerId) {
+          case (null) { false };
+          case (?partnerId) { caller == partnerId };
+        };
+
+        // Authorization rules:
+        // 1. Admin can update any booking
+        // 2. Customer can update their own booking
+        // 3. Assigned delivery partner can update status only
+        if (not (isAdmin or isCustomer or isAssignedPartner)) {
+          Runtime.trap("Unauthorized: Cannot update this booking");
+        };
+
+        // If delivery partner, they can only update status
+        if (isAssignedPartner and not isAdmin and not isCustomer) {
+          // Verify only status changed
+          if (
+            booking.customerId != existingBooking.customerId or
+            booking.pickupAddress != existingBooking.pickupAddress or
+            booking.dropAddress != existingBooking.dropAddress or
+            booking.slotTime != existingBooking.slotTime or
+            booking.frequency != existingBooking.frequency or
+            booking.deliveryPartnerId != existingBooking.deliveryPartnerId
+          ) {
+            Runtime.trap("Unauthorized: Delivery partners can only update booking status");
+          };
+        };
+
+        // Customer cannot change deliveryPartnerId (only admin can)
+        if (isCustomer and not isAdmin) {
+          if (booking.deliveryPartnerId != existingBooking.deliveryPartnerId) {
+            Runtime.trap("Unauthorized: Customers cannot assign delivery partners");
+          };
+        };
+      };
+    };
+
+    // Persist the updated booking
+    dabbaBookings.add(booking.id, booking);
+  };
+
+  public query ({ caller }) func getAssignedBookings(deliveryPartnerId : Text) : async [Text] {
+    // Must be authenticated user
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view assigned bookings");
+    };
+
+    // Parse the delivery partner ID
+    let partnerPrincipal = Principal.fromText(deliveryPartnerId);
+
+    // Authorization: Only the delivery partner themselves or admins can view assignments
+    if (caller != partnerPrincipal and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own assigned bookings");
+    };
+
+    // Return booking IDs assigned to this delivery partner
+    dabbaBookings.filter(
+      func(_id, booking) {
+        switch (booking.deliveryPartnerId) {
+          case (null) { false };
+          case (?id) { id == partnerPrincipal };
+        };
+      }
+    ).keys().toArray();
   };
 };

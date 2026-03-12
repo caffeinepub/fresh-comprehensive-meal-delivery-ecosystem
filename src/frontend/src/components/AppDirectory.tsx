@@ -1,47 +1,80 @@
-import { ExternalLink, Smartphone, Truck, UtensilsCrossed, Shield } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import LazyImage from './LazyImage';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  ExternalLink,
+  Shield,
+  Smartphone,
+  Truck,
+  UtensilsCrossed,
+} from "lucide-react";
+import LazyImage from "./LazyImage";
 
 export default function AppDirectory() {
   const baseUrl = window.location.origin;
 
   const apps = [
     {
-      name: 'Fresh Customer App',
-      description: 'Order home-cooked meals and schedule dabba pickup services',
+      name: "Fresh Customer App",
+      description: "Order home-cooked meals and schedule dabba pickup services",
       icon: Smartphone,
-      color: 'fresh',
+      color: "fresh",
       url: `${baseUrl}?app=customer`,
-      features: ['Browse restaurant meals', 'Schedule dabba pickups', 'Track deliveries', 'Manage subscriptions'],
-      targetUsers: 'For customers ordering meals and dabba services',
+      features: [
+        "Browse restaurant meals",
+        "Schedule dabba pickups",
+        "Track deliveries",
+        "Manage subscriptions",
+      ],
+      targetUsers: "For customers ordering meals and dabba services",
     },
     {
-      name: 'Fresh Delivery App',
-      description: 'Manage deliveries and track your earnings as a delivery partner',
+      name: "Fresh Delivery App",
+      description:
+        "Manage deliveries and track your earnings as a delivery partner",
       icon: Truck,
-      color: 'delivery',
+      color: "delivery",
       url: `${baseUrl}?app=delivery`,
-      features: ['Accept delivery orders', 'Update delivery status', 'Track earnings', 'Manage availability'],
-      targetUsers: 'For delivery partners and drivers',
+      features: [
+        "Accept delivery orders",
+        "Update delivery status",
+        "Track earnings",
+        "Manage availability",
+      ],
+      targetUsers: "For delivery partners and drivers",
     },
     {
-      name: 'Fresh Restaurant App',
-      description: 'Manage your restaurant menu and incoming orders',
+      name: "Fresh Restaurant App",
+      description: "Manage your restaurant menu and incoming orders",
       icon: UtensilsCrossed,
-      color: 'restaurant',
+      color: "restaurant",
       url: `${baseUrl}?app=restaurant`,
-      features: ['Create and edit meals', 'Upload meal images', 'Manage orders', 'Track revenue'],
-      targetUsers: 'For restaurant partners and food providers',
+      features: [
+        "Create and edit meals",
+        "Upload meal images",
+        "Manage orders",
+        "Track revenue",
+      ],
+      targetUsers: "For restaurant partners and food providers",
     },
     {
-      name: 'Fresh Admin App',
-      description: 'Oversee platform operations and manage all users',
+      name: "Fresh Admin App",
+      description: "Oversee platform operations and manage all users",
       icon: Shield,
-      color: 'admin',
+      color: "admin",
       url: `${baseUrl}?app=admin`,
-      features: ['User management', 'Analytics dashboard', 'Restaurant activation', 'System controls'],
-      targetUsers: 'For platform administrators',
+      features: [
+        "User management",
+        "Analytics dashboard",
+        "Restaurant activation",
+        "System controls",
+      ],
+      targetUsers: "For platform administrators",
     },
   ];
 
@@ -59,15 +92,19 @@ export default function AppDirectory() {
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <LazyImage 
-              src="/assets/generated/fresh-logo.dim_200x200.png" 
-              alt="Fresh Logo" 
-              className="h-12 w-12" 
+            <LazyImage
+              src="/assets/generated/fresh-logo.dim_200x200.png"
+              alt="Fresh Logo"
+              className="h-12 w-12"
               priority={true}
             />
             <div>
-              <h1 className="text-2xl font-bold text-fresh-900">Fresh Ecosystem</h1>
-              <p className="text-sm text-fresh-600">Choose your app to get started</p>
+              <h1 className="text-2xl font-bold text-fresh-900">
+                Fresh Ecosystem
+              </h1>
+              <p className="text-sm text-fresh-600">
+                Choose your app to get started
+              </p>
             </div>
           </div>
         </div>
@@ -82,8 +119,9 @@ export default function AppDirectory() {
               Welcome to Fresh
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Access our suite of Progressive Web Apps designed for customers, delivery partners, 
-              restaurant owners, and administrators. Click any link below to install and launch your app.
+              Access our suite of Progressive Web Apps designed for customers,
+              delivery partners, restaurant owners, and administrators. Click
+              any link below to install and launch your app.
             </p>
           </div>
 
@@ -92,8 +130,8 @@ export default function AppDirectory() {
             {apps.map((app) => {
               const Icon = app.icon;
               return (
-                <Card 
-                  key={app.name} 
+                <Card
+                  key={app.name}
                   className={`border-2 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-${app.color}-50/30`}
                 >
                   <CardHeader>
@@ -102,24 +140,41 @@ export default function AppDirectory() {
                         <Icon className={`h-8 w-8 text-${app.color}-600`} />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">{app.name}</CardTitle>
-                        <CardDescription className="text-base">{app.description}</CardDescription>
+                        <CardTitle className="text-xl mb-2">
+                          {app.name}
+                        </CardTitle>
+                        <CardDescription className="text-base">
+                          {app.description}
+                        </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Target Users */}
-                    <div className={`px-4 py-2 rounded-lg bg-${app.color}-100/50 border border-${app.color}-200`}>
-                      <p className={`text-sm font-medium text-${app.color}-800`}>{app.targetUsers}</p>
+                    <div
+                      className={`px-4 py-2 rounded-lg bg-${app.color}-100/50 border border-${app.color}-200`}
+                    >
+                      <p
+                        className={`text-sm font-medium text-${app.color}-800`}
+                      >
+                        {app.targetUsers}
+                      </p>
                     </div>
 
                     {/* Features */}
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Key Features:</p>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                        Key Features:
+                      </p>
                       <ul className="space-y-1">
-                        {app.features.map((feature, idx) => (
-                          <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                            <span className={`h-1.5 w-1.5 rounded-full bg-${app.color}-500`} />
+                        {app.features.map((feature) => (
+                          <li
+                            key={feature}
+                            className="text-sm text-gray-600 flex items-center gap-2"
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full bg-${app.color}-500`}
+                            />
                             {feature}
                           </li>
                         ))}
@@ -128,7 +183,9 @@ export default function AppDirectory() {
 
                     {/* Installation URL */}
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-gray-700">Installation URL:</p>
+                      <p className="text-sm font-semibold text-gray-700">
+                        Installation URL:
+                      </p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 px-3 py-2 bg-gray-100 rounded text-xs text-gray-800 overflow-x-auto">
                           {app.url}
@@ -163,8 +220,12 @@ export default function AppDirectory() {
           {/* Installation Instructions */}
           <Card className="bg-gradient-to-br from-gray-50 to-white border-2">
             <CardHeader>
-              <CardTitle className="text-2xl">Installation Instructions</CardTitle>
-              <CardDescription>How to install Fresh apps on your device</CardDescription>
+              <CardTitle className="text-2xl">
+                Installation Instructions
+              </CardTitle>
+              <CardDescription>
+                How to install Fresh apps on your device
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Mobile Instructions */}
@@ -174,9 +235,16 @@ export default function AppDirectory() {
                   Mobile Devices (iOS & Android)
                 </h3>
                 <ol className="space-y-2 ml-7 list-decimal text-gray-700">
-                  <li>Click "Open & Install App" button for your desired app</li>
-                  <li>On iOS: Tap the Share button, then "Add to Home Screen"</li>
-                  <li>On Android: Tap the menu (⋮), then "Install app" or "Add to Home screen"</li>
+                  <li>
+                    Click "Open & Install App" button for your desired app
+                  </li>
+                  <li>
+                    On iOS: Tap the Share button, then "Add to Home Screen"
+                  </li>
+                  <li>
+                    On Android: Tap the menu (⋮), then "Install app" or "Add to
+                    Home screen"
+                  </li>
                   <li>Follow the prompts to complete installation</li>
                   <li>Launch the app from your home screen</li>
                 </ol>
@@ -189,8 +257,12 @@ export default function AppDirectory() {
                   Desktop (Chrome, Edge, Safari)
                 </h3>
                 <ol className="space-y-2 ml-7 list-decimal text-gray-700">
-                  <li>Click "Open & Install App" button for your desired app</li>
-                  <li>Look for the install icon in your browser's address bar</li>
+                  <li>
+                    Click "Open & Install App" button for your desired app
+                  </li>
+                  <li>
+                    Look for the install icon in your browser's address bar
+                  </li>
                   <li>Click "Install" when prompted</li>
                   <li>The app will open in a standalone window</li>
                   <li>Access it anytime from your applications menu</li>
@@ -199,14 +271,17 @@ export default function AppDirectory() {
 
               {/* Direct URL Access */}
               <div className="bg-fresh-50 p-4 rounded-lg border border-fresh-200">
-                <h3 className="font-semibold text-lg mb-2 text-fresh-900">Direct URL Access</h3>
+                <h3 className="font-semibold text-lg mb-2 text-fresh-900">
+                  Direct URL Access
+                </h3>
                 <p className="text-sm text-fresh-800 mb-3">
-                  You can also bookmark or share these URLs directly. Each URL will automatically 
-                  load the correct app with proper PWA installation capabilities.
+                  You can also bookmark or share these URLs directly. Each URL
+                  will automatically load the correct app with proper PWA
+                  installation capabilities.
                 </p>
                 <p className="text-xs text-fresh-700">
-                  <strong>Note:</strong> All apps work across mobile and desktop browsers with full 
-                  offline support once installed.
+                  <strong>Note:</strong> All apps work across mobile and desktop
+                  browsers with full offline support once installed.
                 </p>
               </div>
             </CardContent>
@@ -218,10 +293,10 @@ export default function AppDirectory() {
       <footer className="border-t bg-white/80 backdrop-blur-sm mt-16">
         <div className="container mx-auto px-4 py-6">
           <p className="text-center text-sm text-gray-600">
-            © 2025. Built with love using{' '}
-            <a 
-              href="https://caffeine.ai" 
-              target="_blank" 
+            © 2025. Built with love using{" "}
+            <a
+              href="https://caffeine.ai"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-fresh-600 hover:text-fresh-700 font-medium"
             >

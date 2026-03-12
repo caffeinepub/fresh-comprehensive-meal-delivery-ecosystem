@@ -1,41 +1,41 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { UtensilsCrossed, Package, DollarSign, Plus, Upload } from 'lucide-react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  useGetRestaurantProfile,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DollarSign,
+  Package,
+  Plus,
+  Upload,
+  UtensilsCrossed,
+} from "lucide-react";
+import { Suspense, lazy, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ExternalBlob } from "../backend";
+import LazyImage from "../components/LazyImage";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import {
+  useCreateMeal,
   useGetRestaurantMeals,
   useGetRestaurantOrders,
-  useCreateMeal,
+  useGetRestaurantProfile,
   useUpdateMeal,
-} from '../hooks/useQueries';
-import { OrderStatusEnum } from '../types/local';
-import type { Meal } from '../types/local';
-import { ExternalBlob } from '../backend';
-import { toast } from 'sonner';
-import LazyImage from '../components/LazyImage';
-
-// Loading fallback component
-function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-restaurant-600 border-t-transparent mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    </div>
-  );
-}
+} from "../hooks/useQueries";
+import { OrderStatusEnum } from "../types/local";
+import type { Meal } from "../types/local";
 
 export default function RestaurantApp() {
   const { identity } = useInternetIdentity();
-  const { data: profile } = useGetRestaurantProfile();
+  useGetRestaurantProfile();
   const { data: meals = [] } = useGetRestaurantMeals();
   const { data: orders = [] } = useGetRestaurantOrders();
   const createMeal = useCreateMeal();
@@ -44,10 +44,10 @@ export default function RestaurantApp() {
   const [showAddMeal, setShowAddMeal] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
   const [mealForm, setMealForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    portionLimit: '',
+    name: "",
+    description: "",
+    price: "",
+    portionLimit: "",
     available: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -55,21 +55,26 @@ export default function RestaurantApp() {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const activeOrders = orders.filter(
-    (o) => o.status !== OrderStatusEnum.delivered && o.status !== OrderStatusEnum.cancelled
+    (o) =>
+      o.status !== OrderStatusEnum.delivered &&
+      o.status !== OrderStatusEnum.cancelled,
   );
-  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalPrice), 0);
+  const totalRevenue = orders.reduce(
+    (sum, order) => sum + Number(order.totalPrice),
+    0,
+  );
 
   // Background prefetch for likely interactions
   useEffect(() => {
     // Prefetch meal images
     const prefetchTimer = setTimeout(() => {
-      meals.forEach((meal) => {
+      for (const meal of meals) {
         if (meal.image) {
           const img = new Image();
           img.src = meal.image.getDirectURL();
         }
-      });
-      console.log('[Prefetch] Restaurant meal images loaded in background');
+      }
+      console.log("[Prefetch] Restaurant meal images loaded in background");
     }, 1000);
 
     return () => clearTimeout(prefetchTimer);
@@ -79,11 +84,11 @@ export default function RestaurantApp() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size must be less than 5MB');
+        toast.error("Image size must be less than 5MB");
         return;
       }
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
         return;
       }
       setImageFile(file);
@@ -97,26 +102,28 @@ export default function RestaurantApp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!mealForm.name || !mealForm.description || !mealForm.price) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (!identity) {
-      toast.error('You must be logged in to create meals');
+      toast.error("You must be logged in to create meals");
       return;
     }
 
     try {
       let imageBlob: ExternalBlob | undefined;
-      
+
       if (imageFile) {
         const arrayBuffer = await imageFile.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
-        imageBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress((percentage) => {
-          setUploadProgress(percentage);
-        });
+        imageBlob = ExternalBlob.fromBytes(uint8Array).withUploadProgress(
+          (percentage) => {
+            setUploadProgress(percentage);
+          },
+        );
       }
 
       const mealData: Meal = {
@@ -125,27 +132,36 @@ export default function RestaurantApp() {
         name: mealForm.name,
         description: mealForm.description,
         price: BigInt(mealForm.price),
-        portionLimit: BigInt(mealForm.portionLimit || '10'),
+        portionLimit: BigInt(mealForm.portionLimit || "10"),
         available: mealForm.available,
         image: imageBlob,
       };
 
       if (editingMeal) {
-        await updateMeal.mutateAsync({ mealId: editingMeal.id, meal: mealData });
-        toast.success('Meal updated successfully');
+        await updateMeal.mutateAsync({
+          mealId: editingMeal.id,
+          meal: mealData,
+        });
+        toast.success("Meal updated successfully");
       } else {
         await createMeal.mutateAsync(mealData);
-        toast.success('Meal created successfully');
+        toast.success("Meal created successfully");
       }
 
       setShowAddMeal(false);
       setEditingMeal(null);
-      setMealForm({ name: '', description: '', price: '', portionLimit: '', available: true });
+      setMealForm({
+        name: "",
+        description: "",
+        price: "",
+        portionLimit: "",
+        available: true,
+      });
       setImageFile(null);
       setImagePreview(null);
       setUploadProgress(0);
-    } catch (error) {
-      toast.error('Failed to save meal');
+    } catch (_error) {
+      toast.error("Failed to save meal");
     }
   };
 
@@ -168,7 +184,9 @@ export default function RestaurantApp() {
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Restaurant Dashboard</h1>
-        <p className="text-xl text-muted-foreground">Manage your menu and orders</p>
+        <p className="text-xl text-muted-foreground">
+          Manage your menu and orders
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 mb-8">
@@ -180,7 +198,9 @@ export default function RestaurantApp() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-restaurant-600">{meals.length}</div>
+            <div className="text-3xl font-bold text-restaurant-600">
+              {meals.length}
+            </div>
             <p className="text-sm text-muted-foreground">Total meals</p>
           </CardContent>
         </Card>
@@ -193,7 +213,9 @@ export default function RestaurantApp() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-restaurant-600">{activeOrders.length}</div>
+            <div className="text-3xl font-bold text-restaurant-600">
+              {activeOrders.length}
+            </div>
             <p className="text-sm text-muted-foreground">In progress</p>
           </CardContent>
         </Card>
@@ -206,7 +228,9 @@ export default function RestaurantApp() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-restaurant-600">₹{totalRevenue}</div>
+            <div className="text-3xl font-bold text-restaurant-600">
+              ₹{totalRevenue}
+            </div>
             <p className="text-sm text-muted-foreground">All time</p>
           </CardContent>
         </Card>
@@ -230,7 +254,9 @@ export default function RestaurantApp() {
           {showAddMeal && (
             <Card>
               <CardHeader>
-                <CardTitle>{editingMeal ? 'Edit Meal' : 'Add New Meal'}</CardTitle>
+                <CardTitle>
+                  {editingMeal ? "Edit Meal" : "Add New Meal"}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -239,7 +265,9 @@ export default function RestaurantApp() {
                     <Input
                       id="name"
                       value={mealForm.name}
-                      onChange={(e) => setMealForm({ ...mealForm, name: e.target.value })}
+                      onChange={(e) =>
+                        setMealForm({ ...mealForm, name: e.target.value })
+                      }
                       required
                     />
                   </div>
@@ -248,7 +276,12 @@ export default function RestaurantApp() {
                     <Textarea
                       id="description"
                       value={mealForm.description}
-                      onChange={(e) => setMealForm({ ...mealForm, description: e.target.value })}
+                      onChange={(e) =>
+                        setMealForm({
+                          ...mealForm,
+                          description: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -259,7 +292,9 @@ export default function RestaurantApp() {
                         id="price"
                         type="number"
                         value={mealForm.price}
-                        onChange={(e) => setMealForm({ ...mealForm, price: e.target.value })}
+                        onChange={(e) =>
+                          setMealForm({ ...mealForm, price: e.target.value })
+                        }
                         required
                       />
                     </div>
@@ -269,7 +304,12 @@ export default function RestaurantApp() {
                         id="portionLimit"
                         type="number"
                         value={mealForm.portionLimit}
-                        onChange={(e) => setMealForm({ ...mealForm, portionLimit: e.target.value })}
+                        onChange={(e) =>
+                          setMealForm({
+                            ...mealForm,
+                            portionLimit: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -299,13 +339,20 @@ export default function RestaurantApp() {
                             style={{ width: `${uploadProgress}%` }}
                           />
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Uploading: {uploadProgress}%</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Uploading: {uploadProgress}%
+                        </p>
                       </div>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button type="submit" disabled={createMeal.isPending || updateMeal.isPending}>
-                      {createMeal.isPending || updateMeal.isPending ? 'Saving...' : 'Save Meal'}
+                    <Button
+                      type="submit"
+                      disabled={createMeal.isPending || updateMeal.isPending}
+                    >
+                      {createMeal.isPending || updateMeal.isPending
+                        ? "Saving..."
+                        : "Save Meal"}
                     </Button>
                     <Button
                       type="button"
@@ -313,7 +360,13 @@ export default function RestaurantApp() {
                       onClick={() => {
                         setShowAddMeal(false);
                         setEditingMeal(null);
-                        setMealForm({ name: '', description: '', price: '', portionLimit: '', available: true });
+                        setMealForm({
+                          name: "",
+                          description: "",
+                          price: "",
+                          portionLimit: "",
+                          available: true,
+                        });
                         setImageFile(null);
                         setImagePreview(null);
                       }}
@@ -332,8 +385,8 @@ export default function RestaurantApp() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{meal.name}</CardTitle>
-                    <Badge variant={meal.available ? 'default' : 'secondary'}>
-                      {meal.available ? 'Available' : 'Unavailable'}
+                    <Badge variant={meal.available ? "default" : "secondary"}>
+                      {meal.available ? "Available" : "Unavailable"}
                     </Badge>
                   </div>
                   <CardDescription>{meal.description}</CardDescription>
@@ -347,8 +400,14 @@ export default function RestaurantApp() {
                     />
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">₹{meal.price.toString()}</span>
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(meal)}>
+                    <span className="text-2xl font-bold">
+                      ₹{meal.price.toString()}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(meal)}
+                    >
                       Edit
                     </Button>
                   </div>
@@ -364,7 +423,9 @@ export default function RestaurantApp() {
               <CardContent className="text-center py-12">
                 <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No orders yet</h3>
-                <p className="text-muted-foreground">Orders will appear here when customers place them</p>
+                <p className="text-muted-foreground">
+                  Orders will appear here when customers place them
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -372,13 +433,22 @@ export default function RestaurantApp() {
               <Card key={order.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Order #{order.id.slice(0, 8)}</CardTitle>
-                    <Badge variant={order.status === OrderStatusEnum.delivered ? 'default' : 'secondary'}>
+                    <CardTitle className="text-lg">
+                      Order #{order.id.slice(0, 8)}
+                    </CardTitle>
+                    <Badge
+                      variant={
+                        order.status === OrderStatusEnum.delivered
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
                       {order.status}
                     </Badge>
                   </div>
                   <CardDescription>
-                    Quantity: {order.quantity.toString()} | Total: ₹{order.totalPrice.toString()}
+                    Quantity: {order.quantity.toString()} | Total: ₹
+                    {order.totalPrice.toString()}
                   </CardDescription>
                 </CardHeader>
               </Card>

@@ -1,53 +1,82 @@
-import { useState, useEffect } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useOtpAuth } from '../hooks/useOtpAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { LogIn, Shield, BarChart3, Users, Mail, Phone, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertCircle,
+  BarChart3,
+  CheckCircle2,
+  Loader2,
+  LogIn,
+  Mail,
+  Phone,
+  Shield,
+  Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useOtpAuth } from "../hooks/useOtpAuth";
 
 export default function AdminLoginPrompt() {
   const { login, loginStatus } = useInternetIdentity();
-  const { sendOtp, verifyOtp, resendOtp, clearSession, status, error, session, canResend } = useOtpAuth();
-  
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [activeTab, setActiveTab] = useState('identity');
+  const {
+    sendOtp,
+    verifyOtp,
+    resendOtp,
+    clearSession,
+    status,
+    error,
+    session,
+    canResend,
+  } = useOtpAuth();
 
-  const isLoggingIn = loginStatus === 'logging-in';
-  const isSending = status === 'sending';
-  const isVerifying = status === 'verifying';
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [activeTab, setActiveTab] = useState("identity");
 
+  const isLoggingIn = loginStatus === "logging-in";
+  const isSending = status === "sending";
+  const isVerifying = status === "verifying";
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
-    setOtp('');
+    setOtp("");
   }, [activeTab]);
 
   // Validate Indian phone number format
   const isValidIndianPhone = (phoneNumber: string): boolean => {
-    const cleaned = phoneNumber.replace(/\s/g, '');
-    return cleaned.startsWith('+91') && cleaned.length >= 13;
+    const cleaned = phoneNumber.replace(/\s/g, "");
+    return cleaned.startsWith("+91") && cleaned.length >= 13;
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Please enter your email address');
+      toast.error("Please enter your email address");
       return;
     }
 
     try {
-      await sendOtp('email', email);
-      toast.success('Verification code sent! Check your email.', {
-        description: 'The code will expire in 5 minutes.',
+      await sendOtp("email", email);
+      toast.success("Verification code sent! Check your email.", {
+        description: "The code will expire in 5 minutes.",
       });
     } catch (error) {
-      toast.error('Failed to send verification code', {
-        description: error instanceof Error ? error.message : 'Please check your email and try again.',
+      toast.error("Failed to send verification code", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your email and try again.",
       });
     }
   };
@@ -55,26 +84,30 @@ export default function AdminLoginPrompt() {
   const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
-      toast.error('Please enter your phone number');
+      toast.error("Please enter your phone number");
       return;
     }
 
     // Frontend validation for Indian phone numbers
     if (!isValidIndianPhone(phone)) {
-      toast.error('Invalid phone number', {
-        description: 'Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.',
+      toast.error("Invalid phone number", {
+        description:
+          "Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.",
       });
       return;
     }
 
     try {
-      await sendOtp('phone', phone);
-      toast.success('Verification code sent! Check your phone.', {
-        description: 'The code will expire in 5 minutes.',
+      await sendOtp("phone", phone);
+      toast.success("Verification code sent! Check your phone.", {
+        description: "The code will expire in 5 minutes.",
       });
     } catch (error) {
-      toast.error('Failed to send verification code', {
-        description: error instanceof Error ? error.message : 'Please check your phone number and try again.',
+      toast.error("Failed to send verification code", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your phone number and try again.",
       });
     }
   };
@@ -82,54 +115,55 @@ export default function AdminLoginPrompt() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp || otp.length !== 6) {
-      toast.error('Please enter a valid 6-digit code');
+      toast.error("Please enter a valid 6-digit code");
       return;
     }
 
     try {
       const isValid = await verifyOtp(otp);
       if (isValid) {
-        toast.success('Login successful!', {
-          description: 'Welcome to Fresh Admin. Redirecting...',
+        toast.success("Login successful!", {
+          description: "Welcome to Fresh Admin. Redirecting...",
         });
       } else {
-        toast.error('Invalid verification code', {
-          description: 'Please check the code and try again.',
+        toast.error("Invalid verification code", {
+          description: "Please check the code and try again.",
         });
       }
-    } catch (error) {
-      toast.error('Verification failed', {
-        description: 'Network error. Please try again.',
+    } catch (_error) {
+      toast.error("Verification failed", {
+        description: "Network error. Please try again.",
       });
     }
   };
 
   const handleResendOtp = async () => {
     if (!canResend) {
-      toast.error('Please wait before resending', {
-        description: 'You can resend the code after 30 seconds.',
+      toast.error("Please wait before resending", {
+        description: "You can resend the code after 30 seconds.",
       });
       return;
     }
 
     try {
       await resendOtp();
-      toast.success('New verification code sent!', {
-        description: 'Check your ' + (session?.method === 'email' ? 'email' : 'phone') + ' for the new code.',
+      toast.success("New verification code sent!", {
+        description: `Check your ${session?.method === "email" ? "email" : "phone"} for the new code.`,
       });
-      setOtp('');
+      setOtp("");
     } catch (error) {
-      toast.error('Failed to resend code', {
-        description: error instanceof Error ? error.message : 'Please try again.',
+      toast.error("Failed to resend code", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
       });
     }
   };
 
   const handleBackToInput = () => {
     clearSession();
-    setOtp('');
-    setEmail('');
-    setPhone('');
+    setOtp("");
+    setEmail("");
+    setPhone("");
   };
 
   return (
@@ -139,13 +173,14 @@ export default function AdminLoginPrompt() {
           <div className="space-y-6">
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Fresh{' '}
+                Fresh{" "}
                 <span className="bg-gradient-to-r from-slate-600 to-slate-500 bg-clip-text text-transparent">
                   Admin
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground">
-                Manage the entire Fresh ecosystem with comprehensive admin controls.
+                Manage the entire Fresh ecosystem with comprehensive admin
+                controls.
               </p>
             </div>
 
@@ -182,7 +217,9 @@ export default function AdminLoginPrompt() {
             <Card className="border-slate-200 dark:border-slate-800 shadow-lg">
               <CardHeader>
                 <CardTitle>Admin Login</CardTitle>
-                <CardDescription>Choose your preferred login method</CardDescription>
+                <CardDescription>
+                  Choose your preferred login method
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {error && (
@@ -192,7 +229,7 @@ export default function AdminLoginPrompt() {
                   </Alert>
                 )}
 
-                {status === 'success' && session?.verified && (
+                {status === "success" && session?.verified && (
                   <Alert className="mb-4 border-slate-200 bg-slate-50 dark:bg-slate-950/20">
                     <CheckCircle2 className="h-4 w-4 text-slate-600" />
                     <AlertDescription className="text-slate-900 dark:text-slate-100">
@@ -201,7 +238,11 @@ export default function AdminLoginPrompt() {
                   </Alert>
                 )}
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="w-full"
+                >
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="identity">
                       <Shield className="h-4 w-4 mr-2" />
@@ -216,12 +257,17 @@ export default function AdminLoginPrompt() {
                       Phone
                     </TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="identity" className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       Secure login with Internet Identity - no passwords needed
                     </p>
-                    <Button onClick={login} disabled={isLoggingIn} size="lg" className="w-full gap-2 bg-slate-600 hover:bg-slate-700">
+                    <Button
+                      onClick={login}
+                      disabled={isLoggingIn}
+                      size="lg"
+                      className="w-full gap-2 bg-slate-600 hover:bg-slate-700"
+                    >
                       {isLoggingIn ? (
                         <>
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -235,9 +281,9 @@ export default function AdminLoginPrompt() {
                       )}
                     </Button>
                   </TabsContent>
-                  
+
                   <TabsContent value="email" className="space-y-4">
-                    {!session || session.method !== 'email' ? (
+                    {!session || session.method !== "email" ? (
                       <form onSubmit={handleEmailLogin} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="email">Email Address</Label>
@@ -251,14 +297,19 @@ export default function AdminLoginPrompt() {
                             disabled={isSending}
                           />
                         </div>
-                        <Button type="submit" disabled={isSending} size="lg" className="w-full bg-slate-600 hover:bg-slate-700">
+                        <Button
+                          type="submit"
+                          disabled={isSending}
+                          size="lg"
+                          className="w-full bg-slate-600 hover:bg-slate-700"
+                        >
                           {isSending ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Sending...
                             </>
                           ) : (
-                            'Send Verification Code'
+                            "Send Verification Code"
                           )}
                         </Button>
                       </form>
@@ -271,7 +322,11 @@ export default function AdminLoginPrompt() {
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) =>
+                              setOtp(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
+                            }
                             maxLength={6}
                             required
                             disabled={isVerifying}
@@ -282,14 +337,19 @@ export default function AdminLoginPrompt() {
                             Code sent to {session.identifier}
                           </p>
                         </div>
-                        <Button type="submit" disabled={isVerifying || otp.length !== 6} size="lg" className="w-full bg-slate-600 hover:bg-slate-700">
+                        <Button
+                          type="submit"
+                          disabled={isVerifying || otp.length !== 6}
+                          size="lg"
+                          className="w-full bg-slate-600 hover:bg-slate-700"
+                        >
                           {isVerifying ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Verifying...
                             </>
                           ) : (
-                            'Verify & Login'
+                            "Verify & Login"
                           )}
                         </Button>
                         <div className="flex gap-2">
@@ -301,7 +361,7 @@ export default function AdminLoginPrompt() {
                             onClick={handleResendOtp}
                             disabled={!canResend || isSending}
                           >
-                            {isSending ? 'Sending...' : 'Resend Code'}
+                            {isSending ? "Sending..." : "Resend Code"}
                           </Button>
                           <Button
                             type="button"
@@ -316,9 +376,9 @@ export default function AdminLoginPrompt() {
                       </form>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="phone" className="space-y-4">
-                    {!session || session.method !== 'phone' ? (
+                    {!session || session.method !== "phone" ? (
                       <form onSubmit={handlePhoneLogin} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="phone">Indian Phone Number</Label>
@@ -335,14 +395,19 @@ export default function AdminLoginPrompt() {
                             Only Indian phone numbers (+91) are supported
                           </p>
                         </div>
-                        <Button type="submit" disabled={isSending} size="lg" className="w-full bg-slate-600 hover:bg-slate-700">
+                        <Button
+                          type="submit"
+                          disabled={isSending}
+                          size="lg"
+                          className="w-full bg-slate-600 hover:bg-slate-700"
+                        >
                           {isSending ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Sending...
                             </>
                           ) : (
-                            'Send Verification Code'
+                            "Send Verification Code"
                           )}
                         </Button>
                       </form>
@@ -355,7 +420,11 @@ export default function AdminLoginPrompt() {
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            onChange={(e) =>
+                              setOtp(
+                                e.target.value.replace(/\D/g, "").slice(0, 6),
+                              )
+                            }
                             maxLength={6}
                             required
                             disabled={isVerifying}
@@ -366,14 +435,19 @@ export default function AdminLoginPrompt() {
                             Code sent to {session.identifier}
                           </p>
                         </div>
-                        <Button type="submit" disabled={isVerifying || otp.length !== 6} size="lg" className="w-full bg-slate-600 hover:bg-slate-700">
+                        <Button
+                          type="submit"
+                          disabled={isVerifying || otp.length !== 6}
+                          size="lg"
+                          className="w-full bg-slate-600 hover:bg-slate-700"
+                        >
                           {isVerifying ? (
                             <>
                               <Loader2 className="h-5 w-5 animate-spin mr-2" />
                               Verifying...
                             </>
                           ) : (
-                            'Verify & Login'
+                            "Verify & Login"
                           )}
                         </Button>
                         <div className="flex gap-2">
@@ -385,7 +459,7 @@ export default function AdminLoginPrompt() {
                             onClick={handleResendOtp}
                             disabled={!canResend || isSending}
                           >
-                            {isSending ? 'Sending...' : 'Resend Code'}
+                            {isSending ? "Sending..." : "Resend Code"}
                           </Button>
                           <Button
                             type="button"

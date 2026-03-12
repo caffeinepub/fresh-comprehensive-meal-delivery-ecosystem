@@ -1,7 +1,4 @@
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetCallerUserProfile } from '../hooks/useQueries';
-import { useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,11 +6,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { User, LogOut, Utensils, Truck, Shield, ChefHat } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChefHat, LogOut, Shield, Truck, User, Utensils } from "lucide-react";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
 
 interface HeaderProps {
-  userType: 'customer' | 'admin' | 'delivery' | 'restaurant';
+  userType: "customer" | "admin" | "delivery" | "restaurant";
 }
 
 export default function Header({ userType }: HeaderProps) {
@@ -30,11 +30,11 @@ export default function Header({ userType }: HeaderProps) {
 
   const getRoleIcon = () => {
     switch (userType) {
-      case 'admin':
+      case "admin":
         return <Shield className="h-4 w-4" />;
-      case 'delivery':
+      case "delivery":
         return <Truck className="h-4 w-4" />;
-      case 'restaurant':
+      case "restaurant":
         return <ChefHat className="h-4 w-4" />;
       default:
         return <Utensils className="h-4 w-4" />;
@@ -43,14 +43,14 @@ export default function Header({ userType }: HeaderProps) {
 
   const getRoleLabel = () => {
     switch (userType) {
-      case 'admin':
-        return 'Admin Dashboard';
-      case 'delivery':
-        return 'Delivery Partner';
-      case 'restaurant':
-        return 'Restaurant Partner';
+      case "admin":
+        return "Admin Dashboard";
+      case "delivery":
+        return "Delivery Partner";
+      case "restaurant":
+        return "Restaurant Partner";
       default:
-        return 'Customer';
+        return "Customer";
     }
   };
 
@@ -58,7 +58,11 @@ export default function Header({ userType }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <img src="/assets/generated/fresh-logo.dim_200x200.png" alt="Fresh Logo" className="h-10 w-10" />
+          <img
+            src="/assets/generated/fresh-logo.dim_200x200.png"
+            alt="Fresh Logo"
+            className="h-10 w-10"
+          />
           <div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-fresh-600 to-fresh-500 bg-clip-text text-transparent">
               Fresh
@@ -84,11 +88,16 @@ export default function Header({ userType }: HeaderProps) {
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium">{userProfile.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{userProfile.userType}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {userProfile.userType}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
                 <LogOut className="h-4 w-4" />
                 Logout
               </DropdownMenuItem>

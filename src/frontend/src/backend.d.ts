@@ -65,6 +65,16 @@ export interface ShoppingItem {
     priceInCents: bigint;
     productDescription: string;
 }
+export interface DabbaBooking {
+    id: string;
+    status: DabbaStatusEnum;
+    pickupAddress: string;
+    slotTime: PickupSlotEnum;
+    customerId: Principal;
+    frequency: SubscriptionTypeEnum;
+    dropAddress: string;
+    deliveryPartnerId?: Principal;
+}
 export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
@@ -94,6 +104,22 @@ export interface UserProfile {
     userType: string;
     name: string;
 }
+export enum DabbaStatusEnum {
+    cancelled = "cancelled",
+    pending = "pending",
+    inTransit = "inTransit",
+    pickedUp = "pickedUp",
+    delivered = "delivered"
+}
+export enum PickupSlotEnum {
+    morning = "morning",
+    midMorning = "midMorning"
+}
+export enum SubscriptionTypeEnum {
+    none = "none",
+    daily = "daily",
+    weekly = "weekly"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -102,6 +128,7 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
+    getAssignedBookings(deliveryPartnerId: string): Promise<Array<string>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
@@ -119,6 +146,7 @@ export interface backendInterface {
     setTwilioConfiguration(config: TwilioConfiguration): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     twilioTransform(input: TransformationInput): Promise<TransformationOutput>;
+    updateBooking(booking: DabbaBooking): Promise<void>;
     verifyEmailOtp(email: Email, otp: OtpCode): Promise<OtpStatus>;
     verifyPhoneOtp(phone: PhoneNumber, otp: OtpCode): Promise<OtpStatus>;
 }

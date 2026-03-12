@@ -1,14 +1,20 @@
-import { useState } from 'react';
-import { useSaveCallerUserProfile } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useSaveCallerUserProfile } from "../hooks/useQueries";
 
 export default function AdminProfileSetup() {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const saveProfile = useSaveCallerUserProfile();
 
@@ -16,7 +22,7 @@ export default function AdminProfileSetup() {
     e.preventDefault();
 
     if (!name.trim()) {
-      toast.error('Please enter your name');
+      toast.error("Please enter your name");
       return;
     }
 
@@ -24,15 +30,15 @@ export default function AdminProfileSetup() {
 
     try {
       // Save admin profile
-      await saveProfile.mutateAsync({ name: name.trim(), userType: 'admin' });
-      
-      toast.success('Admin profile created successfully!');
-      
+      await saveProfile.mutateAsync({ name: name.trim(), userType: "admin" });
+
+      toast.success("Admin profile created successfully!");
+
       // Small delay to ensure queries refetch before UI updates
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create profile');
-      console.error('Profile creation error:', error);
+      toast.error(error.message || "Failed to create profile");
+      console.error("Profile creation error:", error);
       setIsSubmitting(false);
     }
   };
@@ -71,7 +77,7 @@ export default function AdminProfileSetup() {
                   Creating Profile...
                 </>
               ) : (
-                'Continue'
+                "Continue"
               )}
             </Button>
           </form>
