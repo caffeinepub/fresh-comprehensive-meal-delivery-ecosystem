@@ -74,7 +74,6 @@ export default function RestaurantApp() {
           img.src = meal.image.getDirectURL();
         }
       }
-      console.log("[Prefetch] Restaurant meal images loaded in background");
     }, 1000);
 
     return () => clearTimeout(prefetchTimer);

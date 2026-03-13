@@ -1,92 +1,85 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import AdminStandaloneApp from "./apps/AdminStandaloneApp";
 import CustomerStandaloneApp from "./apps/CustomerStandaloneApp";
 import DeliveryStandaloneApp from "./apps/DeliveryStandaloneApp";
 import RestaurantStandaloneApp from "./apps/RestaurantStandaloneApp";
 import AppDirectory from "./components/AppDirectory";
 
-export default function App() {
-  const [appType, setAppType] = useState<
-    "customer" | "delivery" | "restaurant" | "admin" | "directory"
-  >("directory");
+type AppType = "customer" | "delivery" | "restaurant" | "admin" | "directory";
 
-  useEffect(() => {
-    // Detect app type from URL parameter, subdomain, or path
+/** Detect app type synchronously from URL — runs once at module init time */
+function detectAppType(): AppType {
+  try {
     const params = new URLSearchParams(window.location.search);
     const appParam = params.get("app");
-
-    // Check URL parameter first
     if (
       appParam &&
       ["customer", "delivery", "restaurant", "admin"].includes(appParam)
     ) {
-      setAppType(appParam as any);
-      updateManifest(appParam as any);
-      return;
+      updateManifest(appParam as AppType);
+      return appParam as AppType;
     }
 
-    // Check subdomain (e.g., delivery.fresh.com, restaurant.fresh.com)
     const hostname = window.location.hostname;
     if (hostname.startsWith("delivery.")) {
-      setAppType("delivery");
       updateManifest("delivery");
-      return;
+      return "delivery";
     }
     if (hostname.startsWith("restaurant.")) {
-      setAppType("restaurant");
       updateManifest("restaurant");
-      return;
+      return "restaurant";
     }
     if (hostname.startsWith("admin.")) {
-      setAppType("admin");
       updateManifest("admin");
-      return;
+      return "admin";
     }
     if (hostname.startsWith("customer.") || hostname.startsWith("app.")) {
-      setAppType("customer");
       updateManifest("customer");
-      return;
+      return "customer";
     }
 
-    // Check path (e.g., /delivery, /restaurant, /admin)
     const path = window.location.pathname;
     if (path.startsWith("/delivery")) {
-      setAppType("delivery");
       updateManifest("delivery");
-      return;
+      return "delivery";
     }
     if (path.startsWith("/restaurant")) {
-      setAppType("restaurant");
       updateManifest("restaurant");
-      return;
+      return "restaurant";
     }
     if (path.startsWith("/admin")) {
-      setAppType("admin");
       updateManifest("admin");
-      return;
+      return "admin";
     }
     if (path.startsWith("/customer")) {
-      setAppType("customer");
       updateManifest("customer");
-      return;
+      return "customer";
     }
+  } catch {
+    // ignore
+  }
+  return "directory";
+}
 
-    // Default to directory view
-    setAppType("directory");
-  }, []);
-
-  const updateManifest = (
-    type: "customer" | "delivery" | "restaurant" | "admin",
-  ) => {
+function updateManifest(type: AppType): void {
+  if (type === "directory") return;
+  try {
     const manifestLink = document.getElementById(
       "manifest-link",
     ) as HTMLLinkElement;
-    if (manifestLink) {
-      manifestLink.href = `/manifest-${type}.json`;
-    }
-  };
+    if (manifestLink) manifestLink.href = `/manifest-${type}.json`;
+  } catch {
+    // ignore
+  }
+}
 
-  // Render the appropriate standalone app or directory
+// Compute once — no useEffect needed
+const initialAppType = detectAppType();
+
+export default function App() {
+  // State initialized synchronously — avoids the "directory" flash on first render
+  const [appType] = useState<AppType>(initialAppType);
+
   switch (appType) {
     case "delivery":
       return <DeliveryStandaloneApp />;

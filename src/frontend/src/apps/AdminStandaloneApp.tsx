@@ -1,37 +1,40 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
-import { useEffect, useState } from "react";
-import AccessDenied from "../components/AccessDenied";
-import AdminLoginPrompt from "../components/AdminLoginPrompt";
-import AdminProfileSetup from "../components/AdminProfileSetup";
+import { Suspense, lazy, useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import InstallPrompt from "../components/InstallPrompt";
-import InstallPromptFirst from "../components/InstallPromptFirst";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useOtpAuth } from "../hooks/useOtpAuth";
-import { useGetCallerUserProfile } from "../hooks/useQueries";
-import {
-  logAppStartup,
-  logPerformanceSummary,
-  markPerformance,
-} from "../lib/performance";
-import AdminApp from "../pages/AdminApp";
+import { markPerformance } from "../lib/performance";
+
+const AdminLoginPrompt = lazy(() => import("../components/AdminLoginPrompt"));
+const AdminApp = lazy(() => import("../pages/AdminApp"));
+
+const ADMIN_PASSWORD_KEY = "fresh_admin_password_auth";
+
+function AppSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="h-16 bg-background border-b" />
+      <main className="flex-1 container mx-auto px-4 py-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+        </div>
+        <Skeleton className="h-12 rounded-lg" />
+        <Skeleton className="h-48 rounded-xl" />
+      </main>
+    </div>
+  );
+}
 
 export default function AdminStandaloneApp() {
-  const { identity, isInitializing } = useInternetIdentity();
-  const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const {
-    data: userProfile,
-    isLoading: profileLoading,
-    isFetched,
-  } = useGetCallerUserProfile();
-  const [showInstallFirst, setShowInstallFirst] = useState(true);
-
-  const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup =
-    isAuthenticated && !profileLoading && isFetched && userProfile === null;
-  const hasCorrectRole = !userProfile || userProfile.userType === "admin";
+  const [adminPasswordAuth, setAdminPasswordAuth] = useState(
+    () => localStorage.getItem(ADMIN_PASSWORD_KEY) === "true",
+  );
 
   useEffect(() => {
     markPerformance("admin-app-mount");
@@ -39,105 +42,30 @@ export default function AdminStandaloneApp() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
-        .then((registration) => {
-          setInterval(() => {
-            registration.update();
-          }, 60000);
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  console.log("[Admin App] New service worker available");
-                }
-              });
-            }
-          });
-        })
-        .catch((error) => {
-          console.error(
-            "[Admin App] Service Worker registration failed:",
-            error,
-          );
-        });
+        .catch(() => {});
     }
 
     document.title = "Fresh Admin - Platform Administration";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#64748b");
 
-    logAppStartup("Admin App");
-    const timer = setTimeout(() => {
-      logPerformanceSummary();
-    }, 3000);
-    return () => clearTimeout(timer);
+    const check = () => {
+      setAdminPasswordAuth(localStorage.getItem(ADMIN_PASSWORD_KEY) === "true");
+    };
+    window.addEventListener("storage", check);
+    return () => window.removeEventListener("storage", check);
   }, []);
 
-  if (showInstallFirst) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <InstallPromptFirst
-          appName="Fresh Admin"
-          appType="admin"
-          onContinue={() => setShowInstallFirst(false)}
-        />
-      </ThemeProvider>
-    );
-  }
-
-  if (isInitializing || (isAuthenticated && profileLoading)) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-admin-50 via-background to-admin-100">
-          <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-admin-600 border-t-transparent mx-auto" />
-            <p className="text-muted-foreground">Loading Fresh Admin App...</p>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!adminPasswordAuth) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen flex-col">
           <Header userType="admin" />
-          <AdminLoginPrompt />
+          <Suspense fallback={<AppSkeleton />}>
+            <AdminLoginPrompt />
+          </Suspense>
           <Footer />
         </div>
-        <Toaster />
-      </ThemeProvider>
-    );
-  }
-
-  if (showProfileSetup) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen flex-col">
-          <Header userType="admin" />
-          <AdminProfileSetup />
-          <Footer />
-        </div>
-        <Toaster />
-      </ThemeProvider>
-    );
-  }
-
-  // Role-based access control: block non-admins
-  if (
-    isAuthenticated &&
-    !profileLoading &&
-    isFetched &&
-    userProfile &&
-    !hasCorrectRole
-  ) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <AccessDenied appName="Admin" />
         <Toaster />
       </ThemeProvider>
     );
@@ -148,7 +76,9 @@ export default function AdminStandaloneApp() {
       <div className="flex min-h-screen flex-col bg-gradient-to-br from-admin-50/30 via-background to-admin-100/20">
         <Header userType="admin" />
         <main className="flex-1">
-          <AdminApp />
+          <Suspense fallback={<AppSkeleton />}>
+            <AdminApp />
+          </Suspense>
         </main>
         <Footer />
         <InstallPrompt appName="Fresh Admin" appType="admin" />

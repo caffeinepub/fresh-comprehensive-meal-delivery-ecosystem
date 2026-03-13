@@ -26,6 +26,16 @@ export type DabbaStatusEnum = { 'cancelled' : null } |
   { 'pickedUp' : null } |
   { 'delivered' : null };
 export type Email = string;
+export interface GuestBooking {
+  'id' : string,
+  'customerIdentifier' : string,
+  'pickupAddress' : string,
+  'dropAddress' : string,
+  'slotTime' : PickupSlotEnum,
+  'frequency' : SubscriptionTypeEnum,
+  'status' : DabbaStatusEnum,
+  'deliveryPartnerId' : [] | [Principal],
+}
 export type OtpCode = string;
 export type OtpStatus = { 'verified' : null } |
   { 'expired' : null } |
@@ -115,9 +125,14 @@ export interface _SERVICE {
     [Array<ShoppingItem>, string, string],
     string
   >,
+  'createGuestBooking' : ActorMethod<[GuestBooking], undefined>,
   'getAssignedBookings' : ActorMethod<[string], Array<string>>,
+  'getAllBookings' : ActorMethod<[], Array<DabbaBooking>>,
+  'getAllGuestBookings' : ActorMethod<[], Array<GuestBooking>>,
+  'getCallerBookings' : ActorMethod<[], Array<DabbaBooking>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getGuestBookingsByIdentifier' : ActorMethod<[string], Array<GuestBooking>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'initializeAccessControl' : ActorMethod<[], undefined>,
@@ -134,6 +149,7 @@ export interface _SERVICE {
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'twilioTransform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateBooking' : ActorMethod<[DabbaBooking], undefined>,
+  'updateGuestBookingStatus' : ActorMethod<[string, DabbaStatusEnum], undefined>,
   'verifyEmailOtp' : ActorMethod<[Email, OtpCode], OtpStatus>,
   'verifyPhoneOtp' : ActorMethod<[PhoneNumber, OtpCode], OtpStatus>,
 }

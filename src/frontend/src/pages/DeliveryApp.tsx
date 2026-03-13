@@ -1,18 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, Clock, Loader2, MapPin, Package } from "lucide-react";
+import { CheckCircle, Loader2, Package } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import DeliveryBookingCard from "../components/DeliveryBookingCard";
 import {
   useGetAssignedDabbaBookings,
   useGetAssignedOrders,
@@ -21,11 +16,7 @@ import {
   useUpdateDeliveryAvailability,
   useUpdateDeliveryStatus,
 } from "../hooks/useQueries";
-import {
-  DabbaStatusEnum,
-  DeliveryStatusEnum,
-  PickupSlotEnum,
-} from "../types/local";
+import { DabbaStatusEnum, DeliveryStatusEnum } from "../types/local";
 
 export default function DeliveryApp() {
   const { data: profile, isLoading: profileLoading } = useGetDeliveryProfile();
@@ -49,7 +40,7 @@ export default function DeliveryApp() {
       toast.success(
         checked ? "You are now available" : "You are now unavailable",
       );
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update availability");
     }
   };
@@ -61,7 +52,7 @@ export default function DeliveryApp() {
     try {
       await updateDeliveryStatus.mutateAsync({ orderId, status });
       toast.success("Order status updated");
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update order status");
     }
   };
@@ -73,17 +64,10 @@ export default function DeliveryApp() {
     try {
       await updateDabbaStatus.mutateAsync({ bookingId, status });
       toast.success("Booking status updated");
-      // Refetch to get latest data
       refetchBookings();
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update booking status");
     }
-  };
-
-  const getSlotTimeText = (slot: PickupSlotEnum) => {
-    return slot === PickupSlotEnum.morning
-      ? "8:00 AM - 10:00 AM"
-      : "10:00 AM - 12:00 PM";
   };
 
   const getStatusVariant = (
@@ -141,16 +125,51 @@ export default function DeliveryApp() {
           </p>
         </div>
 
-        <Tabs defaultValue="orders" className="space-y-6">
+        <Tabs defaultValue="bookings" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="orders">
-              Meal Orders ({orders.length})
-            </TabsTrigger>
             <TabsTrigger value="bookings">
               Dabba Bookings ({bookings.length})
             </TabsTrigger>
+            <TabsTrigger value="orders">
+              Meal Orders ({orders.length})
+            </TabsTrigger>
           </TabsList>
 
+          {/* Dabba Bookings tab - with PIN/QR */}
+          <TabsContent value="bookings" className="space-y-4">
+            {bookingsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-delivery-600" />
+              </div>
+            ) : bookings.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No dabba bookings assigned yet
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              bookings.map((booking) => (
+                <DeliveryBookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onPickedUp={(id) =>
+                    handleUpdateBookingStatus(id, DabbaStatusEnum.pickedUp)
+                  }
+                  onInTransit={(id) =>
+                    handleUpdateBookingStatus(id, DabbaStatusEnum.inTransit)
+                  }
+                  onDelivered={(id) =>
+                    handleUpdateBookingStatus(id, DabbaStatusEnum.delivered)
+                  }
+                />
+              ))
+            )}
+          </TabsContent>
+
+          {/* Meal orders tab */}
           <TabsContent value="orders" className="space-y-4">
             {ordersLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -172,156 +191,46 @@ export default function DeliveryApp() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle>Order #{order.id}</CardTitle>
-                        <CardDescription>
-                          Quantity: {order.quantity.toString()}
-                        </CardDescription>
+                        <p className="text-sm text-muted-foreground">
+                          Qty: {order.quantity.toString()}
+                        </p>
                       </div>
                       <Badge variant={getStatusVariant(order.deliveryStatus)}>
                         {order.deliveryStatus}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleUpdateOrderStatus(
-                            order.id,
-                            DeliveryStatusEnum.pickedUp,
-                          )
-                        }
-                        disabled={
-                          order.deliveryStatus !== DeliveryStatusEnum.assigned
-                        }
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark Picked Up
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleUpdateOrderStatus(
-                            order.id,
-                            DeliveryStatusEnum.delivered,
-                          )
-                        }
-                        disabled={
-                          order.deliveryStatus !== DeliveryStatusEnum.pickedUp
-                        }
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark Delivered
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="bookings" className="space-y-4">
-            {bookingsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-delivery-600" />
-              </div>
-            ) : bookings.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    No dabba bookings assigned yet
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              bookings.map((booking) => (
-                <Card key={booking.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>Dabba Pickup</CardTitle>
-                        <CardDescription>
-                          Booking ID: {booking.id}
-                        </CardDescription>
-                      </div>
-                      <Badge variant={getStatusVariant(booking.status)}>
-                        {booking.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                        <div className="flex-1">
-                          <div className="text-sm text-muted-foreground">
-                            Pickup
-                          </div>
-                          <div className="font-medium">
-                            {booking.pickupAddress}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-                        <div className="flex-1">
-                          <div className="text-sm text-muted-foreground">
-                            Drop
-                          </div>
-                          <div className="font-medium">
-                            {booking.dropAddress}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {getSlotTimeText(booking.slotTime)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleUpdateBookingStatus(
-                            booking.id,
-                            DabbaStatusEnum.pickedUp,
-                          )
-                        }
-                        disabled={booking.status !== DabbaStatusEnum.pending}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark Picked Up
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleUpdateBookingStatus(
-                            booking.id,
-                            DabbaStatusEnum.inTransit,
-                          )
-                        }
-                        disabled={booking.status !== DabbaStatusEnum.pickedUp}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        In Transit
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          handleUpdateBookingStatus(
-                            booking.id,
-                            DabbaStatusEnum.delivered,
-                          )
-                        }
-                        disabled={booking.status !== DabbaStatusEnum.inTransit}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Delivered
-                      </Button>
-                    </div>
+                  <CardContent className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateOrderStatus(
+                          order.id,
+                          DeliveryStatusEnum.pickedUp,
+                        )
+                      }
+                      disabled={
+                        order.deliveryStatus !== DeliveryStatusEnum.assigned
+                      }
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Picked Up
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleUpdateOrderStatus(
+                          order.id,
+                          DeliveryStatusEnum.delivered,
+                        )
+                      }
+                      disabled={
+                        order.deliveryStatus !== DeliveryStatusEnum.pickedUp
+                      }
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Delivered
+                    </Button>
                   </CardContent>
                 </Card>
               ))

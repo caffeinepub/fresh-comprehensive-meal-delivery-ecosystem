@@ -9,41 +9,112 @@ export interface FareRates {
   baseFare: number;
   perKmRate: number;
   minFare: number;
+  freeKm: number; // km included in base fare
 }
 
-export function getStoredFareRates(): FareRates {
+export interface AllFareRates {
+  restaurant: FareRates;
+  dabbawala: FareRates;
+}
+
+const DEFAULT_RESTAURANT_RATES: FareRates = {
+  baseFare: 45,
+  perKmRate: 6,
+  minFare: 45,
+  freeKm: 3,
+};
+
+const DEFAULT_DABBAWALA_RATES: FareRates = {
+  baseFare: 35,
+  perKmRate: 6,
+  minFare: 35,
+  freeKm: 4,
+};
+
+const STORAGE_KEY = "allFareRates";
+
+export function getStoredAllFareRates(): AllFareRates {
   try {
-    const stored = localStorage.getItem("fareRates");
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return { baseFare: 30, perKmRate: 12, minFare: 50 };
+  return {
+    restaurant: DEFAULT_RESTAURANT_RATES,
+    dabbawala: DEFAULT_DABBAWALA_RATES,
+  };
+}
+
+export function saveAllFareRates(rates: AllFareRates): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rates));
+}
+
+/** Legacy shim — kept so other files that import getStoredFareRates() still compile */
+export function getStoredFareRates(): FareRates {
+  return getStoredAllFareRates().restaurant;
 }
 
 export function saveFareRates(rates: FareRates): void {
-  localStorage.setItem("fareRates", JSON.stringify(rates));
+  const all = getStoredAllFareRates();
+  saveAllFareRates({ ...all, restaurant: rates });
 }
 
+export function calculateFareForType(
+  distanceKm: number,
+  type: "restaurant" | "dabbawala",
+  overrideRates?: FareRates,
+): number {
+  const rates =
+    overrideRates ??
+    (type === "restaurant"
+      ? getStoredAllFareRates().restaurant
+      : getStoredAllFareRates().dabbawala);
+
+  const extraKm = Math.max(0, distanceKm - rates.freeKm);
+  const fare = rates.baseFare + extraKm * rates.perKmRate;
+  return Math.max(fare, rates.minFare);
+}
+
+export function calculateDabbawalaFare(
+  distanceKm: number,
+  rates?: FareRates,
+): number {
+  return calculateFareForType(distanceKm, "dabbawala", rates);
+}
+
+export function calculateRestaurantFare(
+  distanceKm: number,
+  rates?: FareRates,
+): number {
+  return calculateFareForType(distanceKm, "restaurant", rates);
+}
+
+/** Legacy export kept for compatibility */
 export function calculateFare(distanceKm: number, rates?: FareRates): number {
-  const r = rates || getStoredFareRates();
-  const fare = r.baseFare + distanceKm * r.perKmRate;
-  return Math.max(fare, r.minFare);
+  return calculateRestaurantFare(distanceKm, rates);
 }
 
 interface DistanceCalculatorProps {
   pickupAddress: string;
   dropAddress: string;
+  orderType?: "restaurant" | "dabbawala";
   onDistanceSet?: (distanceKm: number, fare: number) => void;
 }
 
 export default function DistanceCalculator({
   pickupAddress,
   dropAddress,
+  orderType = "restaurant",
   onDistanceSet,
 }: DistanceCalculatorProps) {
   const [distanceKm, setDistanceKm] = useState("");
-  const rates = getStoredFareRates();
+  const rates =
+    orderType === "dabbawala"
+      ? getStoredAllFareRates().dabbawala
+      : getStoredAllFareRates().restaurant;
   const distanceNum = Number.parseFloat(distanceKm) || 0;
-  const fare = distanceNum > 0 ? calculateFare(distanceNum, rates) : 0;
+  const fare =
+    distanceNum > 0 ? calculateFareForType(distanceNum, orderType) : 0;
+  const extraKm = Math.max(0, distanceNum - rates.freeKm);
 
   const handleApply = () => {
     if (distanceNum > 0 && onDistanceSet) {
@@ -96,24 +167,23 @@ export default function DistanceCalculator({
         {distanceNum > 0 && (
           <div className="rounded-lg bg-primary/10 p-3 space-y-1">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Base fare</span>
+              <span className="text-muted-foreground">
+                Base fare (incl. first {rates.freeKm} km)
+              </span>
               <span>₹{rates.baseFare}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                {distanceNum} km × ₹{rates.perKmRate}/km
-              </span>
-              <span>₹{(distanceNum * rates.perKmRate).toFixed(2)}</span>
-            </div>
+            {extraKm > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {extraKm.toFixed(2)} km × ₹{rates.perKmRate}/km
+                </span>
+                <span>₹{(extraKm * rates.perKmRate).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-base border-t pt-1 mt-1">
               <span>Estimated Fare</span>
               <span className="text-primary">₹{fare.toFixed(2)}</span>
             </div>
-            {fare === rates.minFare && (
-              <p className="text-xs text-muted-foreground">
-                *Minimum fare applied
-              </p>
-            )}
           </div>
         )}
 

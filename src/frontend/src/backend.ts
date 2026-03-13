@@ -228,6 +228,8 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     getAssignedBookings(deliveryPartnerId: string): Promise<Array<string>>;
+    getAllBookings(): Promise<Array<DabbaBooking>>;
+    getCallerBookings(): Promise<Array<DabbaBooking>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
@@ -376,6 +378,34 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAssignedBookings(arg0);
             return result;
+        }
+    }
+    async getAllBookings(): Promise<Array<DabbaBooking>> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).getAllBookings();
+                return result.map((b: any) => from_candid_record_n20_reverse(b));
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).getAllBookings();
+            return result.map((b: any) => from_candid_record_n20_reverse(b));
+        }
+    }
+    async getCallerBookings(): Promise<Array<DabbaBooking>> {
+        if (this.processError) {
+            try {
+                const result = await (this.actor as any).getCallerBookings();
+                return result.map((b: any) => from_candid_record_n20_reverse(b));
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await (this.actor as any).getCallerBookings();
+            return result.map((b: any) => from_candid_record_n20_reverse(b));
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
@@ -959,6 +989,18 @@ function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     } : value == UserRole.guest ? {
         guest: null
     } : value;
+}
+function from_candid_record_n20_reverse(value: any): DabbaBooking {
+    return {
+        id: value.id,
+        status: value.status.__kind__ as any,
+        pickupAddress: value.pickupAddress,
+        slotTime: value.slotTime.__kind__ as any,
+        customerId: value.customerId,
+        frequency: value.frequency.__kind__ as any,
+        dropAddress: value.dropAddress,
+        deliveryPartnerId: value.deliveryPartnerId && value.deliveryPartnerId.length > 0 ? value.deliveryPartnerId[0] : undefined,
+    };
 }
 export interface CreateActorOptions {
     agent?: Agent;

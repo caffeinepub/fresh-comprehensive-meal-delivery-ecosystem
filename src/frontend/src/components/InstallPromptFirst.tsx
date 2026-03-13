@@ -27,55 +27,23 @@ export default function InstallPromptFirst({
 }: InstallPromptFirstProps) {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(true);
+
+  // Show card immediately — no artificial 1-second delay
+  const isInstallable = true;
 
   useEffect(() => {
-    // Check if already installed (PWA mode)
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as any).standalone === true;
-
-    if (isStandalone) {
-      // Already installed, skip to login
-      onContinue();
-      return;
-    }
-
-    // Check if user has already seen this prompt in this session
-    const hasSeenPrompt = sessionStorage.getItem(
-      `pwa-install-first-seen-${appType}`,
-    );
-    if (hasSeenPrompt) {
-      // User has seen the prompt in this session, skip to login
-      onContinue();
-      return;
-    }
-
-    // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsInstallable(true);
     };
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    // Listen for app installed event
     const handleAppInstalled = () => {
       sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
-      setShowPrompt(false);
       onContinue();
     };
 
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
-
-    // For browsers that don't support beforeinstallprompt, show a generic install message
-    const timer = setTimeout(() => {
-      if (!isInstallable) {
-        setIsInstallable(true);
-      }
-    }, 1000);
 
     return () => {
       window.removeEventListener(
@@ -83,57 +51,30 @@ export default function InstallPromptFirst({
         handleBeforeInstallPrompt,
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
-      clearTimeout(timer);
     };
-  }, [appType, onContinue, isInstallable]);
+  }, [appType, onContinue]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // For browsers that don't support the install prompt API (iOS Safari)
-      // Show instructions or just continue
-      sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
-      setShowPrompt(false);
-      onContinue();
-      return;
-    }
-
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-
-      if (outcome === "accepted") {
-        console.log("User accepted the install prompt");
-      } else {
-        console.log("User dismissed the install prompt");
+    sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+      } catch {
+        // ignore
       }
-
-      sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
       setDeferredPrompt(null);
-      setShowPrompt(false);
-      onContinue();
-    } catch (error) {
-      console.error("Error showing install prompt:", error);
-      sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
-      setShowPrompt(false);
-      onContinue();
     }
+    onContinue();
   };
 
   const handleSkip = () => {
     sessionStorage.setItem(`pwa-install-first-seen-${appType}`, "true");
-    setShowPrompt(false);
     onContinue();
   };
 
-  if (!isInstallable || !showPrompt) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/20 to-background">
-        <div className="text-center">
-          <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="text-muted-foreground">Loading {appName}...</p>
-        </div>
-      </div>
-    );
+  if (!isInstallable) {
+    return null;
   }
 
   const gradientClasses = {

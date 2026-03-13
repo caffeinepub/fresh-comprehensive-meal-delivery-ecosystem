@@ -67,6 +67,7 @@ export interface Review {
 export interface DabbaBooking {
   id: string;
   customerId: Principal;
+  customerIdentifier?: string; // phone/email for OTP users
   pickupAddress: string;
   dropAddress: string;
   slotTime: PickupSlotEnum;

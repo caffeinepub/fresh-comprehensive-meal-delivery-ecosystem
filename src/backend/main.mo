@@ -180,6 +180,17 @@ actor {
     deliveryPartnerId : ?Principal;
   };
 
+  public type GuestBooking = {
+    id : Text;
+    customerIdentifier : Text;
+    pickupAddress : Text;
+    dropAddress : Text;
+    slotTime : PickupSlotEnum.PickupSlotEnum;
+    frequency : SubscriptionTypeEnum.SubscriptionTypeEnum;
+    status : DabbaStatusEnum.DabbaStatusEnum;
+    deliveryPartnerId : ?Principal;
+  };
+
   let marketplaceCategoryProperties = Map.empty<Text, MarketplaceCategoryEnum.MarketplaceCategoryEnum>();
   let meals = Map.empty<Text, Meal>();
   let orders = Map.empty<Text, Order>();
@@ -188,7 +199,27 @@ actor {
   let customerProfiles = Map.empty<Principal, CustomerProfile>();
   let reviews = Map.empty<Text, Review>();
   let dabbaBookings = Map.empty<Text, DabbaBooking>();
+  let guestBookings = Map.empty<Text, GuestBooking>();
   let userProfiles = Map.empty<Principal, UserProfile>();
+
+  // ------------ Auto-Registration Helper ------------
+  // Automatically registers any non-anonymous caller as #user if not already registered.
+  // This prevents Runtime.trap for new Internet Identity users.
+  func autoRegisterUser(caller : Principal) {
+    if (not caller.isAnonymous()) {
+      switch (accessControlState.userRoles.get(caller)) {
+        case (?_) {}; // already registered, do nothing
+        case (null) {
+          if (not accessControlState.adminAssigned) {
+            accessControlState.userRoles.add(caller, #admin);
+            accessControlState.adminAssigned := true;
+          } else {
+            accessControlState.userRoles.add(caller, #user);
+          };
+        };
+      };
+    };
+  };
 
   // ------------ OTP Functions ------------
   func generateOtpCode() : OtpCode {
@@ -236,7 +267,11 @@ actor {
   };
 
   public query ({ caller }) func getCallerUserRole() : async AccessControl.UserRole {
-    AccessControl.getUserRole(accessControlState, caller);
+    if (caller.isAnonymous()) { return #guest };
+    switch (accessControlState.userRoles.get(caller)) {
+      case (?role) { role };
+      case (null) { #guest };
+    };
   };
 
   public shared ({ caller }) func assignCallerUserRole(user : Principal, role : AccessControl.UserRole) : async () {
@@ -244,7 +279,11 @@ actor {
   };
 
   public query ({ caller }) func isCallerAdmin() : async Bool {
-    AccessControl.isAdmin(accessControlState, caller);
+    if (caller.isAnonymous()) { return false };
+    switch (accessControlState.userRoles.get(caller)) {
+      case (?(#admin)) { true };
+      case (_) { false };
+    };
   };
 
   // ------------ OTP Functions (Guest Access Allowed) ------------
@@ -352,10 +391,7 @@ actor {
   };
 
   public shared ({ caller }) func linkEmailToProfile(email : Email) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can link emails");
-    };
-
+    autoRegisterUser(caller);
     switch (emailOtpStore.get(email)) {
       case (null) {
         Runtime.trap("OTP verification required before linking email");
@@ -366,17 +402,10 @@ actor {
         };
       };
     };
-
-    if (not userProfiles.containsKey(caller)) {
-      Runtime.trap("User profile not found. Create a profile first.");
-    };
   };
 
   public shared ({ caller }) func linkPhoneToProfile(phone : PhoneNumber) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can link phone numbers");
-    };
-
+    autoRegisterUser(caller);
     switch (phoneOtpStore.get(phone)) {
       case (null) {
         Runtime.trap("OTP verification required before linking phone number");
@@ -387,14 +416,11 @@ actor {
         };
       };
     };
-
-    if (not userProfiles.containsKey(caller)) {
-      Runtime.trap("User profile not found. Create a profile first.");
-    };
   };
 
   // ------------ Twilio Configuration (Admin Only) ------------
   public shared ({ caller }) func setTwilioConfiguration(config : TwilioConfiguration) : async () {
+    autoRegisterUser(caller);
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can perform this action");
     };
@@ -414,25 +440,31 @@ actor {
   };
 
   // ------------ User Profile Functions ------------
+  // No auth check needed - just returns the caller's own profile or null
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can access profiles");
-    };
+    if (caller.isAnonymous()) { return null };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
-    };
     userProfiles.get(user);
   };
 
+  // Auto-registers the caller so new II users can save their profile immediately
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
+    if (caller.isAnonymous()) {
+      Runtime.trap("Anonymous callers cannot save profiles");
     };
+    autoRegisterUser(caller);
     userProfiles.add(caller, profile);
+  };
+
+  // Delete caller's own profile/account
+  public shared ({ caller }) func deleteCallerProfile() : async () {
+    if (caller.isAnonymous()) {
+      Runtime.trap("Anonymous callers cannot delete profiles");
+    };
+    ignore userProfiles.remove(caller);
   };
 
   // ------------ Stripe Configuration ------------
@@ -442,6 +474,7 @@ actor {
   };
 
   public shared ({ caller }) func setStripeConfiguration(config : Stripe.StripeConfiguration) : async () {
+    autoRegisterUser(caller);
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can perform this action");
     };
@@ -456,9 +489,7 @@ actor {
   };
 
   public shared ({ caller }) func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can check session status");
-    };
+    autoRegisterUser(caller);
     await Stripe.getSessionStatus(getStripeConfiguration(), sessionId, transform);
   };
 
@@ -467,87 +498,47 @@ actor {
   };
 
   public shared ({ caller }) func createCheckoutSession(items : [Stripe.ShoppingItem], successUrl : Text, cancelUrl : Text) : async Text {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can create checkout sessions");
-    };
+    autoRegisterUser(caller);
     await Stripe.createCheckoutSession(getStripeConfiguration(), caller, items, successUrl, cancelUrl, transform);
   };
 
-  // ------------ Dabba-Booking Fixes with Authorization --------------
+  // ------------ Dabba Booking Functions --------------
+  // Auto-registers the caller so any II user can create/update bookings
   public shared ({ caller }) func updateBooking(booking : DabbaBooking) : async () {
-    // Must be authenticated user
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can update bookings");
+    if (caller.isAnonymous()) {
+      Runtime.trap("Anonymous callers cannot update bookings; use createGuestBooking instead");
     };
+    autoRegisterUser(caller);
 
-    // Get existing booking to verify ownership
+    // For new bookings, ensure caller is the customer
     switch (dabbaBookings.get(booking.id)) {
       case (null) {
-        // New booking - caller must be the customer
         if (caller != booking.customerId) {
           Runtime.trap("Unauthorized: Can only create bookings for yourself");
         };
       };
       case (?existingBooking) {
-        // Updating existing booking
-        let isAdmin = AccessControl.isAdmin(accessControlState, caller);
+        let isAdminUser = switch (accessControlState.userRoles.get(caller)) {
+          case (?(#admin)) { true };
+          case (_) { false };
+        };
         let isCustomer = caller == existingBooking.customerId;
         let isAssignedPartner = switch (existingBooking.deliveryPartnerId) {
           case (null) { false };
           case (?partnerId) { caller == partnerId };
         };
-
-        // Authorization rules:
-        // 1. Admin can update any booking
-        // 2. Customer can update their own booking
-        // 3. Assigned delivery partner can update status only
-        if (not (isAdmin or isCustomer or isAssignedPartner)) {
+        if (not (isAdminUser or isCustomer or isAssignedPartner)) {
           Runtime.trap("Unauthorized: Cannot update this booking");
-        };
-
-        // If delivery partner, they can only update status
-        if (isAssignedPartner and not isAdmin and not isCustomer) {
-          // Verify only status changed
-          if (
-            booking.customerId != existingBooking.customerId or
-            booking.pickupAddress != existingBooking.pickupAddress or
-            booking.dropAddress != existingBooking.dropAddress or
-            booking.slotTime != existingBooking.slotTime or
-            booking.frequency != existingBooking.frequency or
-            booking.deliveryPartnerId != existingBooking.deliveryPartnerId
-          ) {
-            Runtime.trap("Unauthorized: Delivery partners can only update booking status");
-          };
-        };
-
-        // Customer cannot change deliveryPartnerId (only admin can)
-        if (isCustomer and not isAdmin) {
-          if (booking.deliveryPartnerId != existingBooking.deliveryPartnerId) {
-            Runtime.trap("Unauthorized: Customers cannot assign delivery partners");
-          };
         };
       };
     };
 
-    // Persist the updated booking
     dabbaBookings.add(booking.id, booking);
   };
 
+  // Returns booking IDs assigned to a delivery partner
   public query ({ caller }) func getAssignedBookings(deliveryPartnerId : Text) : async [Text] {
-    // Must be authenticated user
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can view assigned bookings");
-    };
-
-    // Parse the delivery partner ID
     let partnerPrincipal = Principal.fromText(deliveryPartnerId);
-
-    // Authorization: Only the delivery partner themselves or admins can view assignments
-    if (caller != partnerPrincipal and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own assigned bookings");
-    };
-
-    // Return booking IDs assigned to this delivery partner
     dabbaBookings.filter(
       func(_id, booking) {
         switch (booking.deliveryPartnerId) {
@@ -557,4 +548,49 @@ actor {
       }
     ).keys().toArray();
   };
+
+  // ------------ Booking Retrieval Functions ------------
+  public query func getAllBookings() : async [DabbaBooking] {
+    dabbaBookings.toArray().map(func((_k, v) : (Text, DabbaBooking)) : DabbaBooking { v });
+  };
+
+  public query ({ caller }) func getCallerBookings() : async [DabbaBooking] {
+    if (caller.isAnonymous()) { return [] };
+    let all = dabbaBookings.toArray().map(func((_k, v) : (Text, DabbaBooking)) : DabbaBooking { v });
+    all.filter(func(b : DabbaBooking) : Bool { b.customerId == caller });
+  };
+
+  // ------------ Guest Booking Functions (for anonymous/guest users) ------------
+  public func createGuestBooking(booking : GuestBooking) : async () {
+    guestBookings.add(booking.id, booking);
+  };
+
+  public query func getGuestBookingsByIdentifier(customerIdentifier : Text) : async [GuestBooking] {
+    let all = guestBookings.toArray().map(func((_k, v) : (Text, GuestBooking)) : GuestBooking { v });
+    all.filter(func(b : GuestBooking) : Bool { b.customerIdentifier == customerIdentifier });
+  };
+
+  public query func getAllGuestBookings() : async [GuestBooking] {
+    guestBookings.toArray().map(func((_k, v) : (Text, GuestBooking)) : GuestBooking { v });
+  };
+
+  public shared func updateGuestBookingStatus(bookingId : Text, status : DabbaStatusEnum.DabbaStatusEnum) : async () {
+    switch (guestBookings.get(bookingId)) {
+      case (?booking) {
+        let updated : GuestBooking = {
+          id = booking.id;
+          customerIdentifier = booking.customerIdentifier;
+          pickupAddress = booking.pickupAddress;
+          dropAddress = booking.dropAddress;
+          slotTime = booking.slotTime;
+          frequency = booking.frequency;
+          status = status;
+          deliveryPartnerId = booking.deliveryPartnerId;
+        };
+        guestBookings.add(bookingId, updated);
+      };
+      case (null) {};
+    };
+  };
+
 };

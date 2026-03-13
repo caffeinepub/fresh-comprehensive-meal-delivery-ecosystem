@@ -110,6 +110,16 @@ export const DabbaBooking = IDL.Record({
   'dropAddress' : IDL.Text,
   'deliveryPartnerId' : IDL.Opt(IDL.Principal),
 });
+export const GuestBooking = IDL.Record({
+  'id' : IDL.Text,
+  'customerIdentifier' : IDL.Text,
+  'pickupAddress' : IDL.Text,
+  'dropAddress' : IDL.Text,
+  'slotTime' : PickupSlotEnum,
+  'frequency' : SubscriptionTypeEnum,
+  'status' : DabbaStatusEnum,
+  'deliveryPartnerId' : IDL.Opt(IDL.Principal),
+});
 export const OtpCode = IDL.Text;
 
 export const idlService = IDL.Service({
@@ -145,9 +155,18 @@ export const idlService = IDL.Service({
       [IDL.Text],
       [],
     ),
+  'createGuestBooking' : IDL.Func([GuestBooking], [], []),
   'getAssignedBookings' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], ['query']),
+  'getAllBookings' : IDL.Func([], [IDL.Vec(DabbaBooking)], ['query']),
+  'getAllGuestBookings' : IDL.Func([], [IDL.Vec(GuestBooking)], ['query']),
+  'getCallerBookings' : IDL.Func([], [IDL.Vec(DabbaBooking)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getGuestBookingsByIdentifier' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(GuestBooking)],
+      ['query'],
+    ),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -176,6 +195,7 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'updateBooking' : IDL.Func([DabbaBooking], [], []),
+  'updateGuestBookingStatus' : IDL.Func([IDL.Text, DabbaStatusEnum], [], []),
   'verifyEmailOtp' : IDL.Func([Email, OtpCode], [OtpStatus], []),
   'verifyPhoneOtp' : IDL.Func([PhoneNumber, OtpCode], [OtpStatus], []),
 });
@@ -279,6 +299,16 @@ export const idlFactory = ({ IDL }) => {
     'dropAddress' : IDL.Text,
     'deliveryPartnerId' : IDL.Opt(IDL.Principal),
   });
+  const GuestBooking = IDL.Record({
+    'id' : IDL.Text,
+    'customerIdentifier' : IDL.Text,
+    'pickupAddress' : IDL.Text,
+    'dropAddress' : IDL.Text,
+    'slotTime' : PickupSlotEnum,
+    'frequency' : SubscriptionTypeEnum,
+    'status' : DabbaStatusEnum,
+    'deliveryPartnerId' : IDL.Opt(IDL.Principal),
+  });
   const OtpCode = IDL.Text;
   
   return IDL.Service({
@@ -314,13 +344,22 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text],
         [],
       ),
+    'createGuestBooking' : IDL.Func([GuestBooking], [], []),
     'getAssignedBookings' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(IDL.Text)],
         ['query'],
       ),
+    'getAllBookings' : IDL.Func([], [IDL.Vec(DabbaBooking)], ['query']),
+    'getAllGuestBookings' : IDL.Func([], [IDL.Vec(GuestBooking)], ['query']),
+    'getCallerBookings' : IDL.Func([], [IDL.Vec(DabbaBooking)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getGuestBookingsByIdentifier' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(GuestBooking)],
+        ['query'],
+      ),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -349,6 +388,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'updateBooking' : IDL.Func([DabbaBooking], [], []),
+    'updateGuestBookingStatus' : IDL.Func([IDL.Text, DabbaStatusEnum], [], []),
     'verifyEmailOtp' : IDL.Func([Email, OtpCode], [OtpStatus], []),
     'verifyPhoneOtp' : IDL.Func([PhoneNumber, OtpCode], [OtpStatus], []),
   });

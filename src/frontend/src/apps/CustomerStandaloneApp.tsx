@@ -1,38 +1,52 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
-import { useEffect, useState } from "react";
-import AccessDenied from "../components/AccessDenied";
-import CustomerLoginPrompt from "../components/CustomerLoginPrompt";
-import CustomerProfileSetup from "../components/CustomerProfileSetup";
+import { Suspense, lazy, useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import InstallPrompt from "../components/InstallPrompt";
-import InstallPromptFirst from "../components/InstallPromptFirst";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useOtpAuth } from "../hooks/useOtpAuth";
-import { useGetCallerUserProfile } from "../hooks/useQueries";
-import {
-  logAppStartup,
-  logPerformanceSummary,
-  markPerformance,
-} from "../lib/performance";
-import HomePage from "../pages/HomePage";
+import { markPerformance } from "../lib/performance";
+
+const CustomerLoginPrompt = lazy(
+  () => import("../components/CustomerLoginPrompt"),
+);
+const HomePage = lazy(() => import("../pages/HomePage"));
+
+type AuthState =
+  | { type: "credential"; data: { name: string; role: string } }
+  | { type: "guest"; data: { name: string; isGuest: boolean } }
+  | null;
+
+function getAuthState(): AuthState {
+  try {
+    const cred = localStorage.getItem("fresh_credential_session");
+    if (cred) return { type: "credential", data: JSON.parse(cred) };
+    const guest = localStorage.getItem("fresh_guest_session");
+    if (guest) return { type: "guest", data: JSON.parse(guest) };
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function AppSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="h-16 bg-background border-b" />
+      <main className="flex-1 container mx-auto px-4 py-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-2 gap-4">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
+        </div>
+        <Skeleton className="h-48 rounded-xl" />
+      </main>
+    </div>
+  );
+}
 
 export default function CustomerStandaloneApp() {
-  const { identity, isInitializing } = useInternetIdentity();
-  const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const {
-    data: userProfile,
-    isLoading: profileLoading,
-    isFetched,
-  } = useGetCallerUserProfile();
-
-  const [showInstallFirst, setShowInstallFirst] = useState(true);
-
-  const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup =
-    isAuthenticated && !profileLoading && isFetched && userProfile === null;
-  const hasCorrectRole = !userProfile || userProfile.userType === "customer";
+  const [authState, setAuthState] = useState<AuthState>(getAuthState);
 
   useEffect(() => {
     markPerformance("customer-app-mount");
@@ -40,107 +54,28 @@ export default function CustomerStandaloneApp() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
-        .then((registration) => {
-          setInterval(() => {
-            registration.update();
-          }, 60000);
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  console.log("[Customer App] New service worker available");
-                }
-              });
-            }
-          });
-        })
-        .catch((error) => {
-          console.error(
-            "[Customer App] Service Worker registration failed:",
-            error,
-          );
-        });
+        .catch(() => {});
     }
 
     document.title = "Fresh Customer - Home Cooked Meal Delivery";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#10b981");
 
-    logAppStartup("Customer App");
-    const timer = setTimeout(() => {
-      logPerformanceSummary();
-    }, 3000);
-    return () => clearTimeout(timer);
+    const onStorage = () => setAuthState(getAuthState());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  if (showInstallFirst) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <InstallPromptFirst
-          appName="Fresh Customer"
-          appType="customer"
-          onContinue={() => setShowInstallFirst(false)}
-        />
-      </ThemeProvider>
-    );
-  }
-
-  if (isInitializing || (isAuthenticated && profileLoading)) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-fresh-50 via-background to-fresh-100">
-          <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-fresh-600 border-t-transparent mx-auto" />
-            <p className="text-muted-foreground">
-              Loading Fresh Customer App...
-            </p>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!authState) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen flex-col">
           <Header userType="customer" />
-          <CustomerLoginPrompt />
+          <Suspense fallback={<AppSkeleton />}>
+            <CustomerLoginPrompt />
+          </Suspense>
           <Footer />
         </div>
-        <Toaster />
-      </ThemeProvider>
-    );
-  }
-
-  if (showProfileSetup) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen flex-col">
-          <Header userType="customer" />
-          <CustomerProfileSetup />
-          <Footer />
-        </div>
-        <Toaster />
-      </ThemeProvider>
-    );
-  }
-
-  // Role-based access control: block non-customers
-  if (
-    isAuthenticated &&
-    !profileLoading &&
-    isFetched &&
-    userProfile &&
-    !hasCorrectRole
-  ) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <AccessDenied appName="Customer" />
         <Toaster />
       </ThemeProvider>
     );
@@ -151,7 +86,9 @@ export default function CustomerStandaloneApp() {
       <div className="flex min-h-screen flex-col bg-gradient-to-br from-fresh-50/30 via-background to-fresh-100/20">
         <Header userType="customer" />
         <main className="flex-1">
-          <HomePage />
+          <Suspense fallback={<AppSkeleton />}>
+            <HomePage />
+          </Suspense>
         </main>
         <Footer />
         <InstallPrompt appName="Fresh Customer" appType="customer" />

@@ -34,9 +34,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import BookingPinCard from "../components/BookingPinCard";
+import { useBookingNotifications } from "../hooks/useBookingNotifications";
 import {
   useCancelDabbaBookingByCustomer,
-  useGetDabbaBookings,
+  useGetMyDabbaBookings,
   useUpdateBooking,
 } from "../hooks/useQueries";
 import {
@@ -48,7 +50,7 @@ import type { DabbaBooking } from "../types/local";
 import { downloadAsCSV } from "../utils/csvExport";
 
 export default function BookingsView() {
-  const { data: bookings = [], isLoading } = useGetDabbaBookings();
+  const { data: bookings = [], isLoading } = useGetMyDabbaBookings();
   const cancelBooking = useCancelDabbaBookingByCustomer();
   const updateBooking = useUpdateBooking();
   const [selectedBooking, setSelectedBooking] = useState<DabbaBooking | null>(
@@ -61,12 +63,14 @@ export default function BookingsView() {
     frequency: SubscriptionTypeEnum.daily,
   });
 
+  useBookingNotifications(bookings);
+
   const handleCancel = async (bookingId: string) => {
     try {
       await cancelBooking.mutateAsync(bookingId);
       toast.success("Booking cancelled successfully");
       setSelectedBooking(null);
-    } catch (_error) {
+    } catch {
       toast.error("Failed to cancel booking");
     }
   };
@@ -83,7 +87,6 @@ export default function BookingsView() {
 
   const handleSaveEdit = async () => {
     if (!selectedBooking) return;
-
     try {
       const updatedBooking: DabbaBooking = {
         ...selectedBooking,
@@ -92,11 +95,10 @@ export default function BookingsView() {
         slotTime: editForm.slotTime,
         frequency: editForm.frequency,
       };
-
       await updateBooking.mutateAsync(updatedBooking);
       toast.success("Booking updated successfully");
       setSelectedBooking(null);
-    } catch (_error) {
+    } catch {
       toast.error("Failed to update booking");
     }
   };
@@ -123,23 +125,17 @@ export default function BookingsView() {
     toast.success("Bookings exported!");
   };
 
-  const getSlotTimeText = (slot: PickupSlotEnum) => {
-    return slot === PickupSlotEnum.morning
+  const getSlotTimeText = (slot: PickupSlotEnum) =>
+    slot === PickupSlotEnum.morning
       ? "8:00 AM - 10:00 AM"
       : "10:00 AM - 12:00 PM";
-  };
 
   const getStatusVariant = (
     status: DabbaStatusEnum,
   ): "default" | "secondary" | "destructive" => {
-    switch (status) {
-      case DabbaStatusEnum.delivered:
-        return "default";
-      case DabbaStatusEnum.cancelled:
-        return "destructive";
-      default:
-        return "secondary";
-    }
+    if (status === DabbaStatusEnum.delivered) return "default";
+    if (status === DabbaStatusEnum.cancelled) return "destructive";
+    return "secondary";
   };
 
   if (isLoading) {
@@ -189,7 +185,9 @@ export default function BookingsView() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-lg">Dabba Pickup</CardTitle>
-                <CardDescription>Booking ID: {booking.id}</CardDescription>
+                <CardDescription>
+                  Booking ID: {booking.id.slice(0, 12)}...
+                </CardDescription>
               </div>
               <Badge variant={getStatusVariant(booking.status)}>
                 {booking.status}
@@ -221,6 +219,13 @@ export default function BookingsView() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm capitalize">{booking.frequency}</span>
             </div>
+
+            {/* PIN Card for active bookings */}
+            {booking.status !== DabbaStatusEnum.cancelled &&
+              booking.status !== DabbaStatusEnum.delivered && (
+                <BookingPinCard bookingId={booking.id} type="both" />
+              )}
+
             <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"

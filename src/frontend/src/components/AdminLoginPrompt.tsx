@@ -14,6 +14,7 @@ import {
   AlertCircle,
   BarChart3,
   CheckCircle2,
+  KeyRound,
   Loader2,
   LogIn,
   Mail,
@@ -25,6 +26,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useOtpAuth } from "../hooks/useOtpAuth";
+
+const ADMIN_PASSWORD = "@fresh1111";
+const ADMIN_PASSWORD_KEY = "fresh_admin_password_auth";
 
 export default function AdminLoginPrompt() {
   const { login, loginStatus } = useInternetIdentity();
@@ -42,7 +46,9 @@ export default function AdminLoginPrompt() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [activeTab, setActiveTab] = useState("identity");
+  const [activeTab, setActiveTab] = useState("password");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const isLoggingIn = loginStatus === "logging-in";
   const isSending = status === "sending";
@@ -53,10 +59,20 @@ export default function AdminLoginPrompt() {
     setOtp("");
   }, [activeTab]);
 
-  // Validate Indian phone number format
   const isValidIndianPhone = (phoneNumber: string): boolean => {
     const cleaned = phoneNumber.replace(/\s/g, "");
     return cleaned.startsWith("+91") && cleaned.length >= 13;
+  };
+
+  const handleAdminPasswordLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPassword === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_PASSWORD_KEY, "true");
+      toast.success("Admin login successful!");
+      window.location.reload();
+    } else {
+      setPasswordError("Incorrect admin password. Please try again.");
+    }
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -65,7 +81,6 @@ export default function AdminLoginPrompt() {
       toast.error("Please enter your email address");
       return;
     }
-
     try {
       await sendOtp("email", email);
       toast.success("Verification code sent! Check your email.", {
@@ -87,16 +102,12 @@ export default function AdminLoginPrompt() {
       toast.error("Please enter your phone number");
       return;
     }
-
-    // Frontend validation for Indian phone numbers
     if (!isValidIndianPhone(phone)) {
       toast.error("Invalid phone number", {
-        description:
-          "Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.",
+        description: "Only Indian phone numbers (+91) are supported.",
       });
       return;
     }
-
     try {
       await sendOtp("phone", phone);
       toast.success("Verification code sent! Check your phone.", {
@@ -118,7 +129,6 @@ export default function AdminLoginPrompt() {
       toast.error("Please enter a valid 6-digit code");
       return;
     }
-
     try {
       const isValid = await verifyOtp(otp);
       if (isValid) {
@@ -139,17 +149,12 @@ export default function AdminLoginPrompt() {
 
   const handleResendOtp = async () => {
     if (!canResend) {
-      toast.error("Please wait before resending", {
-        description: "You can resend the code after 30 seconds.",
-      });
+      toast.error("Please wait before resending");
       return;
     }
-
     try {
       await resendOtp();
-      toast.success("New verification code sent!", {
-        description: `Check your ${session?.method === "email" ? "email" : "phone"} for the new code.`,
-      });
+      toast.success("New verification code sent!");
       setOtp("");
     } catch (error) {
       toast.error("Failed to resend code", {
@@ -243,21 +248,68 @@ export default function AdminLoginPrompt() {
                   onValueChange={setActiveTab}
                   className="w-full"
                 >
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="identity">
-                      <Shield className="h-4 w-4 mr-2" />
-                      Identity
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="password" data-ocid="admin.tab">
+                      <KeyRound className="h-4 w-4 mr-1" />
+                      Admin
                     </TabsTrigger>
-                    <TabsTrigger value="email">
-                      <Mail className="h-4 w-4 mr-2" />
+                    <TabsTrigger value="identity" data-ocid="admin.tab">
+                      <Shield className="h-4 w-4 mr-1" />
+                      ID
+                    </TabsTrigger>
+                    <TabsTrigger value="email" data-ocid="admin.tab">
+                      <Mail className="h-4 w-4 mr-1" />
                       Email
                     </TabsTrigger>
-                    <TabsTrigger value="phone">
-                      <Phone className="h-4 w-4 mr-2" />
+                    <TabsTrigger value="phone" data-ocid="admin.tab">
+                      <Phone className="h-4 w-4 mr-1" />
                       Phone
                     </TabsTrigger>
                   </TabsList>
 
+                  {/* Admin Password Tab */}
+                  <TabsContent value="password" className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Use your admin password to access the dashboard directly.
+                    </p>
+                    <form
+                      onSubmit={handleAdminPasswordLogin}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <Label htmlFor="admin-password">Admin Password</Label>
+                        <Input
+                          id="admin-password"
+                          data-ocid="admin.input"
+                          type="password"
+                          placeholder="Enter admin password"
+                          value={adminPassword}
+                          onChange={(e) => {
+                            setAdminPassword(e.target.value);
+                            setPasswordError("");
+                          }}
+                          required
+                          autoFocus
+                        />
+                        {passwordError && (
+                          <p className="text-xs text-destructive">
+                            {passwordError}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        type="submit"
+                        data-ocid="admin.submit_button"
+                        size="lg"
+                        className="w-full bg-slate-700 hover:bg-slate-800"
+                      >
+                        <KeyRound className="h-5 w-5 mr-2" />
+                        Login as Admin
+                      </Button>
+                    </form>
+                  </TabsContent>
+
+                  {/* Internet Identity Tab */}
                   <TabsContent value="identity" className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       Secure login with Internet Identity - no passwords needed
@@ -270,18 +322,19 @@ export default function AdminLoginPrompt() {
                     >
                       {isLoggingIn ? (
                         <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Logging in...
+                          <Loader2 className="h-5 w-5 animate-spin" /> Logging
+                          in...
                         </>
                       ) : (
                         <>
-                          <LogIn className="h-5 w-5" />
-                          Login with Internet Identity
+                          <LogIn className="h-5 w-5" /> Login with Internet
+                          Identity
                         </>
                       )}
                     </Button>
                   </TabsContent>
 
+                  {/* Email Tab */}
                   <TabsContent value="email" className="space-y-4">
                     {!session || session.method !== "email" ? (
                       <form onSubmit={handleEmailLogin} className="space-y-4">
@@ -289,6 +342,7 @@ export default function AdminLoginPrompt() {
                           <Label htmlFor="email">Email Address</Label>
                           <Input
                             id="email"
+                            data-ocid="admin.input"
                             type="email"
                             placeholder="admin@fresh.com"
                             value={email}
@@ -305,7 +359,7 @@ export default function AdminLoginPrompt() {
                         >
                           {isSending ? (
                             <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                              <Loader2 className="h-5 w-5 animate-spin mr-2" />{" "}
                               Sending...
                             </>
                           ) : (
@@ -319,6 +373,7 @@ export default function AdminLoginPrompt() {
                           <Label htmlFor="otp">Verification Code</Label>
                           <Input
                             id="otp"
+                            data-ocid="admin.input"
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
@@ -345,7 +400,7 @@ export default function AdminLoginPrompt() {
                         >
                           {isVerifying ? (
                             <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                              <Loader2 className="h-5 w-5 animate-spin mr-2" />{" "}
                               Verifying...
                             </>
                           ) : (
@@ -377,6 +432,7 @@ export default function AdminLoginPrompt() {
                     )}
                   </TabsContent>
 
+                  {/* Phone Tab */}
                   <TabsContent value="phone" className="space-y-4">
                     {!session || session.method !== "phone" ? (
                       <form onSubmit={handlePhoneLogin} className="space-y-4">
@@ -384,6 +440,7 @@ export default function AdminLoginPrompt() {
                           <Label htmlFor="phone">Indian Phone Number</Label>
                           <Input
                             id="phone"
+                            data-ocid="admin.input"
                             type="tel"
                             placeholder="+91 98765 43210"
                             value={phone}
@@ -403,7 +460,7 @@ export default function AdminLoginPrompt() {
                         >
                           {isSending ? (
                             <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                              <Loader2 className="h-5 w-5 animate-spin mr-2" />{" "}
                               Sending...
                             </>
                           ) : (
@@ -417,6 +474,7 @@ export default function AdminLoginPrompt() {
                           <Label htmlFor="otp-phone">Verification Code</Label>
                           <Input
                             id="otp-phone"
+                            data-ocid="admin.input"
                             type="text"
                             placeholder="Enter 6-digit code"
                             value={otp}
@@ -443,7 +501,7 @@ export default function AdminLoginPrompt() {
                         >
                           {isVerifying ? (
                             <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                              <Loader2 className="h-5 w-5 animate-spin mr-2" />{" "}
                               Verifying...
                             </>
                           ) : (

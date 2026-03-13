@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Calendar, Package, Plus, UtensilsCrossed } from "lucide-react";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useGetCustomerOrders, useGetDabbaBookings } from "../hooks/useQueries";
 import { DabbaStatusEnum, OrderStatusEnum } from "../types/local";
 
@@ -19,7 +19,6 @@ const OrdersView = lazy(() => import("../components/OrdersView"));
 
 type View = "home" | "booking" | "mealPlan" | "bookings" | "orders";
 
-// Loading fallback component
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center py-12">
@@ -33,7 +32,8 @@ function LoadingFallback() {
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<View>("home");
-  const [prefetchedViews, setPrefetchedViews] = useState<Set<View>>(new Set());
+  // Use a ref instead of state so prefetch completions don't trigger re-renders
+  const prefetchedRef = useRef<Set<View>>(new Set());
   const { data: bookings = [] } = useGetDabbaBookings();
   const { data: orders = [] } = useGetCustomerOrders();
 
@@ -48,52 +48,54 @@ export default function HomePage() {
       o.status !== OrderStatusEnum.cancelled,
   );
 
-  // Background prefetch for likely next screens
+  // Background prefetch for likely next screens — no state updates on completion
   useEffect(() => {
-    // Prefetch booking and meal plan flows after initial render
-    const prefetchTimer = setTimeout(() => {
-      if (!prefetchedViews.has("booking")) {
-        import("../components/BookingFlow").then(() => {
-          setPrefetchedViews((prev) => new Set(prev).add("booking"));
-          console.log("[Prefetch] BookingFlow loaded in background");
-        });
-      }
-    }, 1000);
+    const prefetch = (
+      view: View,
+      factory: () => Promise<any>,
+      delay: number,
+    ) => {
+      const t = setTimeout(() => {
+        if (!prefetchedRef.current.has(view)) {
+          factory()
+            .then(() => {
+              prefetchedRef.current.add(view);
+            })
+            .catch(() => {});
+        }
+      }, delay);
+      return t;
+    };
 
-    const prefetchTimer2 = setTimeout(() => {
-      if (!prefetchedViews.has("mealPlan")) {
-        import("../components/MealPlanFlow").then(() => {
-          setPrefetchedViews((prev) => new Set(prev).add("mealPlan"));
-          console.log("[Prefetch] MealPlanFlow loaded in background");
-        });
-      }
-    }, 2000);
-
-    const prefetchTimer3 = setTimeout(() => {
-      if (!prefetchedViews.has("bookings")) {
-        import("../components/BookingsView").then(() => {
-          setPrefetchedViews((prev) => new Set(prev).add("bookings"));
-          console.log("[Prefetch] BookingsView loaded in background");
-        });
-      }
-    }, 3000);
-
-    const prefetchTimer4 = setTimeout(() => {
-      if (!prefetchedViews.has("orders")) {
-        import("../components/OrdersView").then(() => {
-          setPrefetchedViews((prev) => new Set(prev).add("orders"));
-          console.log("[Prefetch] OrdersView loaded in background");
-        });
-      }
-    }, 4000);
+    const t1 = prefetch(
+      "booking",
+      () => import("../components/BookingFlow"),
+      800,
+    );
+    const t2 = prefetch(
+      "mealPlan",
+      () => import("../components/MealPlanFlow"),
+      1600,
+    );
+    const t3 = prefetch(
+      "bookings",
+      () => import("../components/BookingsView"),
+      2400,
+    );
+    const t4 = prefetch(
+      "orders",
+      () => import("../components/OrdersView"),
+      3200,
+    );
 
     return () => {
-      clearTimeout(prefetchTimer);
-      clearTimeout(prefetchTimer2);
-      clearTimeout(prefetchTimer3);
-      clearTimeout(prefetchTimer4);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
     };
-  }, [prefetchedViews]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (currentView === "booking") {
     return (
@@ -121,7 +123,11 @@ export default function HomePage() {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button variant="outline" onClick={() => setCurrentView("home")}>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentView("home")}
+            data-ocid="home.back.button"
+          >
             ← Back to Home
           </Button>
         </div>
@@ -137,7 +143,11 @@ export default function HomePage() {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <Button variant="outline" onClick={() => setCurrentView("home")}>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentView("home")}
+            data-ocid="home.back.button"
+          >
             ← Back to Home
           </Button>
         </div>
@@ -211,6 +221,7 @@ export default function HomePage() {
         <Card
           className="hover:shadow-lg transition-shadow cursor-pointer"
           onClick={() => setCurrentView("booking")}
+          data-ocid="home.booking.card"
         >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -222,7 +233,7 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">
+            <Button className="w-full" data-ocid="home.booking.primary_button">
               <Plus className="h-4 w-4 mr-2" />
               New Booking
             </Button>
@@ -232,6 +243,7 @@ export default function HomePage() {
         <Card
           className="hover:shadow-lg transition-shadow cursor-pointer"
           onClick={() => setCurrentView("mealPlan")}
+          data-ocid="home.mealplan.card"
         >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -243,7 +255,7 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full">
+            <Button className="w-full" data-ocid="home.mealplan.primary_button">
               <Plus className="h-4 w-4 mr-2" />
               Browse Meals
             </Button>
@@ -259,13 +271,19 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             {bookings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No bookings yet</p>
+              <p
+                className="text-sm text-muted-foreground"
+                data-ocid="home.bookings.empty_state"
+              >
+                No bookings yet
+              </p>
             ) : (
               <div className="space-y-2">
-                {bookings.slice(0, 3).map((booking) => (
+                {bookings.slice(0, 3).map((booking, i) => (
                   <div
                     key={booking.id}
                     className="flex items-center justify-between p-2 border rounded"
+                    data-ocid={`home.bookings.item.${i + 1}`}
                   >
                     <span className="text-sm">{booking.pickupAddress}</span>
                     <span className="text-xs text-muted-foreground capitalize">
@@ -277,6 +295,7 @@ export default function HomePage() {
                   variant="link"
                   onClick={() => setCurrentView("bookings")}
                   className="w-full"
+                  data-ocid="home.bookings.link"
                 >
                   View All Bookings
                 </Button>
@@ -292,13 +311,19 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             {orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No orders yet</p>
+              <p
+                className="text-sm text-muted-foreground"
+                data-ocid="home.orders.empty_state"
+              >
+                No orders yet
+              </p>
             ) : (
               <div className="space-y-2">
-                {orders.slice(0, 3).map((order) => (
+                {orders.slice(0, 3).map((order, i) => (
                   <div
                     key={order.id}
                     className="flex items-center justify-between p-2 border rounded"
+                    data-ocid={`home.orders.item.${i + 1}`}
                   >
                     <span className="text-sm">
                       Order #{order.id.slice(0, 8)}
@@ -312,6 +337,7 @@ export default function HomePage() {
                   variant="link"
                   onClick={() => setCurrentView("orders")}
                   className="w-full"
+                  data-ocid="home.orders.link"
                 >
                   View All Orders
                 </Button>

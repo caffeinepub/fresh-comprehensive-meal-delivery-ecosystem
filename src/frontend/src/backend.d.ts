@@ -75,6 +75,16 @@ export interface DabbaBooking {
     dropAddress: string;
     deliveryPartnerId?: Principal;
 }
+export interface GuestBooking {
+    id: string;
+    customerIdentifier: string;
+    status: DabbaStatusEnum;
+    pickupAddress: string;
+    slotTime: PickupSlotEnum;
+    frequency: SubscriptionTypeEnum;
+    dropAddress: string;
+    deliveryPartnerId?: Principal;
+}
 export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
@@ -128,9 +138,15 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
+    createGuestBooking(booking: GuestBooking): Promise<void>;
+    deleteCallerProfile(): Promise<void>;
     getAssignedBookings(deliveryPartnerId: string): Promise<Array<string>>;
+    getAllBookings(): Promise<Array<DabbaBooking>>;
+    getAllGuestBookings(): Promise<Array<GuestBooking>>;
+    getCallerBookings(): Promise<Array<DabbaBooking>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getGuestBookingsByIdentifier(customerIdentifier: string): Promise<Array<GuestBooking>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     initializeAccessControl(): Promise<void>;
@@ -147,6 +163,7 @@ export interface backendInterface {
     transform(input: TransformationInput): Promise<TransformationOutput>;
     twilioTransform(input: TransformationInput): Promise<TransformationOutput>;
     updateBooking(booking: DabbaBooking): Promise<void>;
+    updateGuestBookingStatus(bookingId: string, status: DabbaStatusEnum): Promise<void>;
     verifyEmailOtp(email: Email, otp: OtpCode): Promise<OtpStatus>;
     verifyPhoneOtp(phone: PhoneNumber, otp: OtpCode): Promise<OtpStatus>;
 }

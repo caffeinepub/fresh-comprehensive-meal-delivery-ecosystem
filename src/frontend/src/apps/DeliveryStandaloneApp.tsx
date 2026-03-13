@@ -1,38 +1,44 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
-import { useEffect, useState } from "react";
-import AccessDenied from "../components/AccessDenied";
-import DeliveryLoginPrompt from "../components/DeliveryLoginPrompt";
-import DeliveryProfileSetup from "../components/DeliveryProfileSetup";
+import { Suspense, lazy, useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import InstallPrompt from "../components/InstallPrompt";
-import InstallPromptFirst from "../components/InstallPromptFirst";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useOtpAuth } from "../hooks/useOtpAuth";
-import { useGetCallerUserProfile } from "../hooks/useQueries";
-import {
-  logAppStartup,
-  logPerformanceSummary,
-  markPerformance,
-} from "../lib/performance";
-import DeliveryApp from "../pages/DeliveryApp";
+import { markPerformance } from "../lib/performance";
+
+const AccessDenied = lazy(() => import("../components/AccessDenied"));
+const DeliveryLoginPrompt = lazy(
+  () => import("../components/DeliveryLoginPrompt"),
+);
+const DeliveryApp = lazy(() => import("../pages/DeliveryApp"));
+
+type CredSession = { role: string; name: string } | null;
+
+function getCredSession(): CredSession {
+  try {
+    const s = localStorage.getItem("fresh_credential_session");
+    return s ? JSON.parse(s) : null;
+  } catch {
+    return null;
+  }
+}
+
+function AppSkeleton() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="h-16 bg-background border-b" />
+      <main className="flex-1 container mx-auto px-4 py-6 space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-32 rounded-xl" />
+      </main>
+    </div>
+  );
+}
 
 export default function DeliveryStandaloneApp() {
-  const { identity, isInitializing } = useInternetIdentity();
-  const { isAuthenticated: otpAuthenticated } = useOtpAuth();
-  const {
-    data: userProfile,
-    isLoading: profileLoading,
-    isFetched,
-  } = useGetCallerUserProfile();
-
-  const [showInstallFirst, setShowInstallFirst] = useState(true);
-
-  const isAuthenticated = !!identity || otpAuthenticated;
-  const showProfileSetup =
-    isAuthenticated && !profileLoading && isFetched && userProfile === null;
-  const hasCorrectRole = !userProfile || userProfile.userType === "delivery";
+  const [session, setSession] = useState<CredSession>(getCredSession);
 
   useEffect(() => {
     markPerformance("delivery-app-mount");
@@ -40,76 +46,26 @@ export default function DeliveryStandaloneApp() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
-        .then((registration) => {
-          setInterval(() => {
-            registration.update();
-          }, 60000);
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  console.log("[Delivery App] New service worker available");
-                }
-              });
-            }
-          });
-        })
-        .catch((error) => {
-          console.error(
-            "[Delivery App] Service Worker registration failed:",
-            error,
-          );
-        });
+        .catch(() => {});
     }
 
     document.title = "Fresh Delivery - Delivery Partner Portal";
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) metaThemeColor.setAttribute("content", "#3b82f6");
 
-    logAppStartup("Delivery App");
-    const timer = setTimeout(() => {
-      logPerformanceSummary();
-    }, 3000);
-    return () => clearTimeout(timer);
+    const onStorage = () => setSession(getCredSession());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  if (showInstallFirst) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <InstallPromptFirst
-          appName="Fresh Delivery"
-          appType="delivery"
-          onContinue={() => setShowInstallFirst(false)}
-        />
-      </ThemeProvider>
-    );
-  }
-
-  if (isInitializing || (isAuthenticated && profileLoading)) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-delivery-50 via-background to-delivery-100">
-          <div className="text-center">
-            <div className="mb-4 h-16 w-16 animate-spin rounded-full border-4 border-delivery-600 border-t-transparent mx-auto" />
-            <p className="text-muted-foreground">
-              Loading Fresh Delivery App...
-            </p>
-          </div>
-        </div>
-      </ThemeProvider>
-    );
-  }
-
-  if (!isAuthenticated) {
+  if (!session) {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <div className="flex min-h-screen flex-col">
           <Header userType="delivery" />
-          <DeliveryLoginPrompt />
+          <Suspense fallback={<AppSkeleton />}>
+            <DeliveryLoginPrompt />
+          </Suspense>
           <Footer />
         </div>
         <Toaster />
@@ -117,30 +73,12 @@ export default function DeliveryStandaloneApp() {
     );
   }
 
-  if (showProfileSetup) {
+  if (session.role !== "delivery") {
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <div className="flex min-h-screen flex-col">
-          <Header userType="delivery" />
-          <DeliveryProfileSetup />
-          <Footer />
-        </div>
-        <Toaster />
-      </ThemeProvider>
-    );
-  }
-
-  // Role-based access control: block non-delivery partners
-  if (
-    isAuthenticated &&
-    !profileLoading &&
-    isFetched &&
-    userProfile &&
-    !hasCorrectRole
-  ) {
-    return (
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-        <AccessDenied appName="Delivery Partner" />
+        <Suspense fallback={null}>
+          <AccessDenied appName="Delivery Partner" />
+        </Suspense>
         <Toaster />
       </ThemeProvider>
     );
@@ -151,7 +89,9 @@ export default function DeliveryStandaloneApp() {
       <div className="flex min-h-screen flex-col bg-gradient-to-br from-delivery-50/30 via-background to-delivery-100/20">
         <Header userType="delivery" />
         <main className="flex-1">
-          <DeliveryApp />
+          <Suspense fallback={<AppSkeleton />}>
+            <DeliveryApp />
+          </Suspense>
         </main>
         <Footer />
         <InstallPrompt appName="Fresh Delivery" appType="delivery" />

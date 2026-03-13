@@ -1,499 +1,350 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle2,
-  Loader2,
-  LogIn,
-  Mail,
-  Phone,
-  Shield,
-  Truck,
-  Utensils,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { Calendar, Check, Copy, Truck, User, Utensils } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useOtpAuth } from "../hooks/useOtpAuth";
+import { loginWithCredentials, registerWithPhone } from "../lib/credentialAuth";
 
 export default function CustomerLoginPrompt() {
-  const { login, loginStatus } = useInternetIdentity();
-  const {
-    sendOtp,
-    verifyOtp,
-    resendOtp,
-    clearSession,
-    status,
-    error,
-    session,
-    canResend,
-  } = useOtpAuth();
+  const [tab, setTab] = useState("new");
 
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [activeTab, setActiveTab] = useState("identity");
+  // New user
+  const [regPhone, setRegPhone] = useState("");
+  const [regName, setRegName] = useState("");
+  const [regResult, setRegResult] = useState<{
+    username: string;
+    password: string;
+  } | null>(null);
+  const [regLoading, setRegLoading] = useState(false);
 
-  const isLoggingIn = loginStatus === "logging-in";
-  const isSending = status === "sending";
-  const isVerifying = status === "verifying";
+  // Login
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  // Clear OTP input when switching tabs
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  useEffect(() => {
-    setOtp("");
-  }, [activeTab]);
+  // Guest
+  const [guestName, setGuestName] = useState("");
 
-  // Validate Indian phone number format
-  const isValidIndianPhone = (phoneNumber: string): boolean => {
-    const cleaned = phoneNumber.replace(/\s/g, "");
-    return cleaned.startsWith("+91") && cleaned.length >= 13;
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email address");
+    const digits = regPhone.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
       return;
     }
+    setRegLoading(true);
+    const result = registerWithPhone(
+      `+91${digits}`,
+      regName.trim(),
+      "customer",
+    );
+    setRegLoading(false);
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+    setRegResult({ username: result.username, password: result.password });
+    toast.success("Account created! Save your credentials.");
+  };
 
-    try {
-      await sendOtp("email", email);
-      toast.success("Verification code sent! Check your email.", {
-        description: "The code will expire in 5 minutes.",
-      });
-    } catch (error) {
-      toast.error("Failed to send verification code", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Please check your email and try again.",
-      });
+  const handleContinueAfterReg = () => {
+    if (!regResult) return;
+    const res = loginWithCredentials(regResult.username, regResult.password);
+    if (res.success) {
+      toast.success(`Welcome, ${regName}! 🎉`);
     }
   };
 
-  const handlePhoneLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone) {
-      toast.error("Please enter your phone number");
+    setLoginLoading(true);
+    const result = loginWithCredentials(loginUsername.trim(), loginPassword);
+    setLoginLoading(false);
+    if (!result.success) {
+      toast.error(result.error);
       return;
     }
-
-    // Frontend validation for Indian phone numbers
-    if (!isValidIndianPhone(phone)) {
-      toast.error("Invalid phone number", {
-        description:
-          "Only Indian phone numbers (+91) are supported. Please enter a valid Indian phone number.",
-      });
+    if (result.user.role !== "customer") {
+      toast.error("This account is not a customer account");
       return;
     }
-
-    try {
-      await sendOtp("phone", phone);
-      toast.success("Verification code sent! Check your phone.", {
-        description: "The code will expire in 5 minutes.",
-      });
-    } catch (error) {
-      toast.error("Failed to send verification code", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "Please check your phone number and try again.",
-      });
-    }
+    toast.success(`Welcome back, ${result.user.name}! 🎉`);
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleGuest = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) {
-      toast.error("Please enter a valid 6-digit code");
+    if (!guestName.trim()) {
+      toast.error("Please enter your name");
       return;
     }
-
-    try {
-      const isValid = await verifyOtp(otp);
-      if (isValid) {
-        toast.success("Login successful!", {
-          description: "Welcome to Fresh. Redirecting...",
-        });
-        // The app will automatically redirect based on authentication state
-      } else {
-        toast.error("Invalid verification code", {
-          description: "Please check the code and try again.",
-        });
-      }
-    } catch (_error) {
-      toast.error("Verification failed", {
-        description: "Network error. Please try again.",
-      });
-    }
+    localStorage.setItem(
+      "fresh_guest_session",
+      JSON.stringify({ name: guestName.trim(), isGuest: true }),
+    );
+    window.dispatchEvent(new Event("storage"));
+    toast.success(`Welcome, ${guestName.trim()}! Let's book your meal 🎉`);
   };
 
-  const handleResendOtp = async () => {
-    if (!canResend) {
-      toast.error("Please wait before resending", {
-        description: "You can resend the code after 30 seconds.",
-      });
-      return;
-    }
-
-    try {
-      await resendOtp();
-      toast.success("New verification code sent!", {
-        description: `Check your ${session?.method === "email" ? "email" : "phone"} for the new code.`,
-      });
-      setOtp("");
-    } catch (error) {
-      toast.error("Failed to resend code", {
-        description:
-          error instanceof Error ? error.message : "Please try again.",
-      });
-    }
-  };
-
-  const handleBackToInput = () => {
-    clearSession();
-    setOtp("");
-    setEmail("");
-    setPhone("");
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => toast.success("Copied!"));
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-fresh-50 via-background to-fresh-100/50 px-4 py-12">
-      <div className="container max-w-6xl">
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Welcome to{" "}
-                <span className="bg-gradient-to-r from-fresh-600 to-fresh-500 bg-clip-text text-transparent">
-                  Fresh
-                </span>
+    <div className="flex-1 flex items-start justify-center bg-gradient-to-br from-fresh-50 via-background to-fresh-100/50 px-4 py-8">
+      <div className="w-full max-w-6xl">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-start">
+          {/* Left: Feature highlights */}
+          <div className="space-y-6 hidden lg:block pt-4">
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight">
+                Welcome to <span className="text-fresh-600">Fresh</span>
               </h1>
-              <p className="text-xl text-muted-foreground">
-                Your daily home-cooked meal delivery service. Fresh, healthy,
-                and delivered to your doorstep.
+              <p className="text-lg text-muted-foreground mt-2">
+                Home-cooked meals delivered fast.
               </p>
             </div>
+            <div className="space-y-3">
+              {[
+                {
+                  icon: Utensils,
+                  title: "Dabba Pickup",
+                  desc: "Daily tiffin from home to office",
+                },
+                {
+                  icon: Calendar,
+                  title: "Meal Plans",
+                  desc: "Weekly & monthly subscriptions",
+                },
+                {
+                  icon: Truck,
+                  title: "Live Tracking",
+                  desc: "Real-time order updates",
+                },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-fresh-50/60 border border-fresh-100"
+                >
+                  <div className="rounded-lg bg-fresh-100 p-2">
+                    <Icon className="h-5 w-5 text-fresh-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{title}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-fresh-50/50 dark:bg-fresh-950/20">
-                <Utensils className="h-6 w-6 text-fresh-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    Dabba Pickup Service
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Schedule daily pickups for your home-cooked tiffins from
-                    home to office
-                  </p>
-                </div>
+          {/* Right: Login card */}
+          <div className="bg-white rounded-2xl shadow-lg border border-border p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="rounded-full bg-fresh-100 p-2">
+                <Utensils className="h-5 w-5 text-fresh-600" />
               </div>
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-fresh-50/50 dark:bg-fresh-950/20">
-                <Calendar className="h-6 w-6 text-fresh-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    Restaurant Subscriptions
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Subscribe to daily or weekly meal plans from your favorite
-                    home cooks
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-fresh-50/50 dark:bg-fresh-950/20">
-                <Truck className="h-6 w-6 text-fresh-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-semibold text-lg">Real-time Tracking</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Track your orders and pickups from preparation to delivery
-                  </p>
-                </div>
+              <div>
+                <h2 className="font-bold text-lg">Fresh Customer</h2>
+                <p className="text-xs text-muted-foreground">
+                  Sign in to start booking
+                </p>
               </div>
             </div>
 
-            <Card className="border-fresh-200 dark:border-fresh-800 shadow-lg">
-              <CardHeader>
-                <CardTitle>Get Started</CardTitle>
-                <CardDescription>
-                  Choose your preferred login method
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {error && (
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="new" data-ocid="login.tab">
+                  New User
+                </TabsTrigger>
+                <TabsTrigger value="login" data-ocid="login.tab">
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="guest" data-ocid="login.tab">
+                  Guest
+                </TabsTrigger>
+              </TabsList>
 
-                {status === "success" && session?.verified && (
-                  <Alert className="mb-4 border-fresh-200 bg-fresh-50 dark:bg-fresh-950/20">
-                    <CheckCircle2 className="h-4 w-4 text-fresh-600" />
-                    <AlertDescription className="text-fresh-900 dark:text-fresh-100">
-                      Successfully verified! Logging you in...
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <Tabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="identity">
-                      <Shield className="h-4 w-4 mr-2" />
-                      Identity
-                    </TabsTrigger>
-                    <TabsTrigger value="email">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email
-                    </TabsTrigger>
-                    <TabsTrigger value="phone">
-                      <Phone className="h-4 w-4 mr-2" />
-                      Phone
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="identity" className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Secure login with Internet Identity - no passwords needed
-                    </p>
+              {/* New User */}
+              <TabsContent value="new" className="space-y-4">
+                {!regResult ? (
+                  <form onSubmit={handleRegister} className="space-y-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="reg-name">Full Name</Label>
+                      <Input
+                        id="reg-name"
+                        placeholder="e.g. Ravi Kumar"
+                        value={regName}
+                        onChange={(e) => setRegName(e.target.value)}
+                        required
+                        data-ocid="login.input"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="reg-phone">Mobile Number (+91)</Label>
+                      <div className="flex gap-2">
+                        <span className="flex items-center px-3 rounded-md border bg-muted text-sm font-medium">
+                          +91
+                        </span>
+                        <Input
+                          id="reg-phone"
+                          placeholder="10-digit number"
+                          maxLength={10}
+                          value={regPhone}
+                          onChange={(e) =>
+                            setRegPhone(e.target.value.replace(/\D/g, ""))
+                          }
+                          required
+                          data-ocid="login.input"
+                        />
+                      </div>
+                    </div>
                     <Button
-                      onClick={login}
-                      disabled={isLoggingIn}
-                      size="lg"
-                      className="w-full gap-2"
+                      type="submit"
+                      className="w-full bg-fresh-600 hover:bg-fresh-700 text-white"
+                      disabled={regLoading}
+                      data-ocid="login.submit_button"
                     >
-                      {isLoggingIn ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Logging in...
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="h-5 w-5" />
-                          Login with Internet Identity
-                        </>
-                      )}
+                      Register
                     </Button>
-                  </TabsContent>
-
-                  <TabsContent value="email" className="space-y-4">
-                    {!session || session.method !== "email" ? (
-                      <form onSubmit={handleEmailLogin} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email Address</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            disabled={isSending}
-                          />
-                        </div>
-                        <Button
-                          type="submit"
-                          disabled={isSending}
-                          size="lg"
-                          className="w-full"
-                        >
-                          {isSending ? (
-                            <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                              Sending...
-                            </>
-                          ) : (
-                            "Send Verification Code"
-                          )}
-                        </Button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleVerifyOtp} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="otp">Verification Code</Label>
-                          <Input
-                            id="otp"
-                            type="text"
-                            placeholder="Enter 6-digit code"
-                            value={otp}
-                            onChange={(e) =>
-                              setOtp(
-                                e.target.value.replace(/\D/g, "").slice(0, 6),
-                              )
-                            }
-                            maxLength={6}
-                            required
-                            disabled={isVerifying}
-                            autoFocus
-                            className="text-center text-2xl tracking-widest"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Code sent to {session.identifier}
-                          </p>
-                        </div>
-                        <Button
-                          type="submit"
-                          disabled={isVerifying || otp.length !== 6}
-                          size="lg"
-                          className="w-full"
-                        >
-                          {isVerifying ? (
-                            <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                              Verifying...
-                            </>
-                          ) : (
-                            "Verify & Login"
-                          )}
-                        </Button>
-                        <div className="flex gap-2">
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-xl bg-amber-50 border-2 border-amber-300 p-4 space-y-3">
+                      <p className="text-sm font-bold text-amber-800 flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        Account Created! Save these credentials:
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between bg-white rounded-lg border border-amber-200 px-3 py-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Username
+                            </p>
+                            <p className="font-mono font-bold text-sm">
+                              {regResult.username}
+                            </p>
+                          </div>
                           <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={handleResendOtp}
-                            disabled={!canResend || isSending}
-                          >
-                            {isSending ? "Sending..." : "Resend Code"}
-                          </Button>
-                          <Button
-                            type="button"
                             variant="ghost"
                             size="sm"
-                            className="flex-1"
-                            onClick={handleBackToInput}
+                            onClick={() => copyText(regResult.username)}
+                            data-ocid="login.button"
                           >
-                            Use different email
+                            <Copy className="h-4 w-4" />
                           </Button>
                         </div>
-                      </form>
-                    )}
-                  </TabsContent>
-
-                  <TabsContent value="phone" className="space-y-4">
-                    {!session || session.method !== "phone" ? (
-                      <form onSubmit={handlePhoneLogin} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="phone">Indian Phone Number</Label>
-                          <Input
-                            id="phone"
-                            type="tel"
-                            placeholder="+91 98765 43210"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            required
-                            disabled={isSending}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Only Indian phone numbers (+91) are supported
-                          </p>
-                        </div>
-                        <Button
-                          type="submit"
-                          disabled={isSending}
-                          size="lg"
-                          className="w-full"
-                        >
-                          {isSending ? (
-                            <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                              Sending...
-                            </>
-                          ) : (
-                            "Send Verification Code"
-                          )}
-                        </Button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleVerifyOtp} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="otp-phone">Verification Code</Label>
-                          <Input
-                            id="otp-phone"
-                            type="text"
-                            placeholder="Enter 6-digit code"
-                            value={otp}
-                            onChange={(e) =>
-                              setOtp(
-                                e.target.value.replace(/\D/g, "").slice(0, 6),
-                              )
-                            }
-                            maxLength={6}
-                            required
-                            disabled={isVerifying}
-                            autoFocus
-                            className="text-center text-2xl tracking-widest"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Code sent to {session.identifier}
-                          </p>
-                        </div>
-                        <Button
-                          type="submit"
-                          disabled={isVerifying || otp.length !== 6}
-                          size="lg"
-                          className="w-full"
-                        >
-                          {isVerifying ? (
-                            <>
-                              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                              Verifying...
-                            </>
-                          ) : (
-                            "Verify & Login"
-                          )}
-                        </Button>
-                        <div className="flex gap-2">
+                        <div className="flex items-center justify-between bg-white rounded-lg border border-amber-200 px-3 py-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              Password
+                            </p>
+                            <p className="font-mono font-bold text-sm">
+                              {regResult.password}
+                            </p>
+                          </div>
                           <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={handleResendOtp}
-                            disabled={!canResend || isSending}
-                          >
-                            {isSending ? "Sending..." : "Resend Code"}
-                          </Button>
-                          <Button
-                            type="button"
                             variant="ghost"
                             size="sm"
-                            className="flex-1"
-                            onClick={handleBackToInput}
+                            onClick={() => copyText(regResult.password)}
+                            data-ocid="login.button"
                           >
-                            Use different phone
+                            <Copy className="h-4 w-4" />
                           </Button>
                         </div>
-                      </form>
-                    )}
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
+                      </div>
+                      <p className="text-xs text-amber-700">
+                        Screenshot or note these down — you'll need them to
+                        login next time.
+                      </p>
+                    </div>
+                    <Button
+                      className="w-full bg-fresh-600 hover:bg-fresh-700 text-white"
+                      onClick={handleContinueAfterReg}
+                      data-ocid="login.primary_button"
+                    >
+                      I've saved it, Continue →
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
 
-          <div className="relative hidden lg:block">
-            <img
-              src="/assets/generated/delivery-hero.dim_800x600.jpg"
-              alt="Fresh Delivery"
-              className="rounded-2xl shadow-2xl w-full h-auto"
-            />
+              {/* Login */}
+              <TabsContent value="login" className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="login-username">Username</Label>
+                    <Input
+                      id="login-username"
+                      placeholder="e.g. cust_1234"
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
+                      required
+                      data-ocid="login.input"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="Your password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      data-ocid="login.input"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-fresh-600 hover:bg-fresh-700 text-white"
+                    disabled={loginLoading}
+                    data-ocid="login.submit_button"
+                  >
+                    Login
+                  </Button>
+                </form>
+                <p className="text-xs text-center text-muted-foreground">
+                  Forgot credentials? Contact admin to reset your password.
+                </p>
+              </TabsContent>
+
+              {/* Guest */}
+              <TabsContent value="guest" className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  No account needed — just enter your name and start booking!
+                </p>
+                <form onSubmit={handleGuest} className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="guest-name">Your Name</Label>
+                    <Input
+                      id="guest-name"
+                      placeholder="e.g. Ravi Kumar"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      required
+                      data-ocid="login.input"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-fresh-600 hover:bg-fresh-700 text-white"
+                    data-ocid="login.submit_button"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Start Booking
+                  </Button>
+                </form>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/50 rounded-lg">
+                  <Badge variant="secondary" className="text-xs">
+                    Tip
+                  </Badge>
+                  Register to save your bookings and get order history.
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
